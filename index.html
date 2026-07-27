@@ -877,6 +877,42 @@ function copyPortalLink(url) {
   showToast('تم نسخ رابط البوابة بنجاح');
 }
 
+function openHallModal(id = null) {
+  const h = id ? state.halls.find(x => x.id === id) : {name:'', defaultRevenue:''};
+  const title = id ? 'تعديل بيانات القاعة' : 'إضافة قاعة جديدة';
+  
+  const content = `
+    <input type="hidden" id="h_id" value="${id||''}">
+    <div class="space-y-4">
+      <div><label class="block text-xs font-bold text-gray-500 mb-1">اسم القاعة</label><input type="text" id="h_name" value="${h.name}" class="w-full border border-gray-300 rounded-xl p-2.5 text-sm outline-none focus:border-brand-500"></div>
+      <div><label class="block text-xs font-bold text-gray-500 mb-1">الإيراد الافتراضي (ج.م)</label><input type="number" id="h_defaultRev" value="${h.defaultRevenue||0}" class="w-full border border-gray-300 rounded-xl p-2.5 text-sm outline-none focus:border-brand-500"></div>
+    </div>
+  `;
+  const footer = `
+    <button onclick="closeModal()" class="px-4 py-2 rounded-xl text-gray-500 font-bold">إلغاء</button>
+    <button onclick="saveHall()" class="px-4 py-2 rounded-xl bg-brand-500 text-white font-bold">حفظ</button>
+  `;
+  openModal(title, content, footer);
+}
+
+function saveHall() {
+  const id = document.getElementById('h_id').value || generateId();
+  const name = document.getElementById('h_name').value;
+  if(!name) return showToast('يجب إدخال اسم القاعة', 'error');
+  
+  const data = {
+    id, 
+    name,
+    defaultRevenue: Number(document.getElementById('h_defaultRev').value || 0)
+  };
+  
+  const idx = state.halls.findIndex(x => x.id === id);
+  if(idx >= 0) state.halls[idx] = data; else state.halls.push(data);
+  
+  saveData(); closeModal(); renderView();
+  showToast('تم حفظ بيانات القاعة بنجاح');
+}
+
 function renderExpenses(container) {
   const monthExpenses = state.expenses.filter(ex => ex.date.startsWith(currentMonth)).sort((a,b)=>b.date.localeCompare(a.date));
   const generalEx = monthExpenses.filter(ex => ex.type === 'general');
@@ -1031,6 +1067,44 @@ function saveInventory() {
   if(!state.inventory) state.inventory = [];
   state.inventory.push({ id: generateId(), name, condition: document.getElementById('inv_cond').value, status: 'available', assignedTo: null });
   saveData(); closeModal(); renderView();
+}
+
+function assignInventoryModal(id) {
+  const inv = state.inventory.find(x => x.id === id);
+  if(!inv) return;
+  const content = `
+    <div class="space-y-4">
+      <p class="text-sm font-bold text-gray-700">تسليم المعدة: ${inv.name}</p>
+      <div>
+        <label class="block text-xs font-bold text-gray-500 mb-1">تسليم إلى المصور</label>
+        <select id="assign_pid" class="w-full border border-gray-300 rounded-xl p-2.5 text-sm outline-none focus:border-brand-500">
+          <option value="">-- اختر المصور --</option>
+          ${state.photographers.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+  `;
+  openModal('تسليم عهدة', content, `<button onclick="closeModal()" class="px-4 py-2 rounded-xl text-gray-500 font-bold">إلغاء</button><button onclick="saveAssignInventory('${id}')" class="px-4 py-2 rounded-xl bg-dark-900 text-white font-bold">تسليم</button>`);
+}
+
+function saveAssignInventory(id) {
+  const pId = document.getElementById('assign_pid').value;
+  if(!pId) return showToast('الرجاء اختيار مصور', 'error');
+  const inv = state.inventory.find(x => x.id === id);
+  if(inv) {
+    inv.status = 'assigned';
+    inv.assignedTo = pId;
+    saveData(); closeModal(); renderView(); showToast('تم تسليم العهدة للمصور');
+  }
+}
+
+function returnInventory(id) {
+  const inv = state.inventory.find(x => x.id === id);
+  if(inv) {
+    inv.status = 'available';
+    inv.assignedTo = null;
+    saveData(); renderView(); showToast('تم استلام العهدة وإضافتها للمخزن');
+  }
 }
 
 function renderSettings(container) {
