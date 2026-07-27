@@ -1,0 +1,1732 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CinePRO 🎥 | نظام إدارة الاستوديوهات الاحترافي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;600;700;800&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14171F; --ink2:#1E2330; --ink-soft:#5B6270;
+    --paper:#F1F1EE; --surface:#FFFFFF;
+    --gold:#B8863B; --gold-deep:#8F6425; --gold-bg:#F6EEDF;
+    --ok:#2F9E58; --ok-bg:#E7F5EC;
+    --danger:#C0392B; --danger-bg:#FCEAE8;
+    --line:#E4E2DC;
+    --radius:14px; --radius-sm:9px;
+    --shadow: 0 6px 24px rgba(20,23,31,0.08);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'Tajawal',sans-serif; background:var(--paper); color:var(--ink); -webkit-font-smoothing:antialiased; min-height: 100vh;}
+  h1,h2,h3,h4{font-family:'Cairo',sans-serif; margin:0;}
+  p{margin:0;}
+  button,input,select{font-family:inherit;}
+  button{cursor:pointer;}
+  .muted{color:var(--ink-soft);}
+  .small{font-size:12.5px;}
+  .ok{color:var(--ok) !important;}
+  .danger{color:var(--danger) !important;}
+
+  /* ---------- Auth & Paywall & Admin ---------- */
+  .full-screen-view {
+      position: fixed; inset: 0; background: var(--paper); z-index: 1000;
+      display: none; align-items: center; justify-content: center; flex-direction: column; padding: 20px;
+  }
+  .full-screen-view.active { display: flex; }
+  .auth-box, .paywall-box {
+      background: #fff; width: 100%; max-width: 420px; border-radius: 20px; padding: 32px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.1); text-align: center;
+  }
+  .paywall-box { max-width: 500px; border-top: 5px solid var(--danger); }
+  .auth-logo { width: 64px; height: 64px; margin: 0 auto 16px; background: var(--ink); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: var(--gold); font-size: 32px; }
+  .auth-box h2 { font-size: 24px; margin-bottom: 8px; }
+  .auth-box p { color: var(--ink-soft); margin-bottom: 24px; font-size: 14px; }
+  .paywall-icon { font-size: 48px; margin-bottom: 16px; }
+  
+  .super-admin-container {
+      background: #fff; width: 100%; max-width: 1100px; height: 90vh; border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden;
+  }
+  .admin-header { background: var(--ink); color: #fff; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+  .admin-body { padding: 20px; overflow-y: auto; flex: 1; }
+
+  .app{min-height:100vh; display:none;}
+  .app.active{display:flex;}
+  .sidebar{
+    position:fixed; top:0; right:0; bottom:0; width:250px;
+    background:var(--ink); color:#fff; display:flex; flex-direction:column;
+    padding:22px 16px; gap:26px; z-index:20;
+  }
+  .brand{display:flex; align-items:center; gap:10px; padding:0 4px;}
+  .brand h1{font-size:19px; color:#fff; display:flex; align-items:center; gap:6px;}
+  .pro-badge { background: linear-gradient(135deg, var(--gold) 0%, #D4AF37 100%); color: #1A1305; font-size: 9.5px; font-weight: 800; padding: 2px 6px; border-radius: 4px; letter-spacing: 0.5px; }
+  .brand span{display:block; font-size:11.5px; color:#9AA0AE; margin-top:2px;}
+  .brand-logo { width:42px; height:42px; border-radius:12px; background:linear-gradient(135deg, var(--ink) 0%, #2A3040 100%); display:flex; align-items:center; justify-content:center; color:var(--gold); font-size:24px; font-weight:900; font-family:'Inter', sans-serif; border:1px solid rgba(184, 134, 59, 0.4); box-shadow: 0 4px 12px rgba(184, 134, 59, 0.15); overflow:hidden; transition: 0.3s; flex-shrink: 0;}
+  .brand-logo:hover { box-shadow: 0 6px 16px rgba(184, 134, 59, 0.3); transform: scale(1.05); }
+  .brand-logo img { width:100%; height:100%; object-fit:cover; }
+  
+  .nav{display:flex; flex-direction:column; gap:4px;}
+  .nav-btn{
+    display:flex; align-items:center; gap:10px; padding:11px 12px; background:transparent; border:none; border-radius:var(--radius-sm);
+    color:#B7BBC6; font-size:14.5px; font-weight:500; text-align:right; width:100%; transition:.15s;
+  }
+  .nav-btn:hover{background:#252A38; color:#fff;}
+  .nav-btn.active{background:var(--gold); color:#1A1305; font-weight:700;}
+  .sidebar-foot{margin-top:auto; font-size:11px; color:#5F6574; padding:12px 10px; background: rgba(255,255,255,0.03); border-radius: var(--radius-sm); text-align: center; border: 1px solid rgba(255,255,255,0.05);}
+
+  .content{margin-right:250px; flex:1; min-width:0; padding:22px 28px 60px;}
+  .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:22px;}
+  .month-filter{display:flex; align-items:center; gap:6px; background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:5px 8px; box-shadow:var(--shadow); transition: 0.2s;}
+  .month-filter:focus-within{border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-bg);}
+  .month-filter input[type=month]{border:none; background:transparent; font-family:'Cairo',sans-serif; font-weight:700; font-size:14px; color:var(--ink); padding:2px 4px; outline:none; box-shadow:none; cursor:pointer; -webkit-appearance:none; appearance:none;}
+  .month-filter input[type=month]:focus{outline:none; box-shadow:none;}
+  .month-filter .icon-btn{width:26px; height:26px; border-radius:50%; background:var(--paper);}
+  
+  .user-menu { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; }
+
+  .view{display:none;}
+  .view.active{display:block;}
+
+  .page-head{display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin-bottom:20px; flex-wrap:wrap;}
+  .page-head h2{font-size:22px; margin-bottom:4px;}
+  .section-title{font-size:16px; margin:26px 0 12px;}
+
+  .btn-primary, .btn-secondary, .btn-danger, .btn-wa, .btn-link{
+    border-radius:10px; border:none; padding:10px 16px; font-size:13.5px; font-weight:700;
+    display:inline-flex; align-items:center; justify-content:center; gap:6px; white-space:nowrap; transition:.15s; text-decoration: none;
+  }
+  .btn-primary{background:var(--gold); color:#1A1305;}
+  .btn-primary:hover{background:var(--gold-deep); color:#fff;}
+  .btn-secondary{background:var(--surface); color:var(--ink); border:1px solid var(--line);}
+  .btn-secondary:hover{background:var(--paper);}
+  .btn-danger{background:var(--danger-bg); color:var(--danger);}
+  .btn-danger:hover{background:var(--danger); color:#fff;}
+  .btn-wa{background:#E9F8EF; color:#1E7C43; flex:1;}
+  .btn-wa:hover{background:#1E7C43; color:#fff;}
+  .btn-link{background:#E8F0FE; color:#1A73E8; flex:1;}
+  .btn-link:hover{background:#1A73E8; color:#fff;}
+  .btn-primary.sm,.btn-secondary.sm,.btn-danger.sm, .btn-wa.sm{padding:7px 11px; font-size:12.5px;}
+  .icon-btn{width:32px; height:32px; border-radius:50%; border:none; background:var(--paper); display:inline-flex; align-items:center; justify-content:center; font-size:14px; color:var(--ink-soft);}
+  .icon-btn:hover{background:var(--line);}
+
+  .dash-actions{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:24px;}
+  .btn-mega{
+    background:var(--surface); border:1px solid var(--gold); border-radius:14px; padding:20px;
+    font-family:'Cairo',sans-serif; font-size:18px; font-weight:800; color:var(--gold-deep);
+    display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:var(--shadow); transition:.2s;
+  }
+  .btn-mega:hover{transform:translateY(-2px); background:var(--gold-bg);}
+  .btn-mega.secondary{border-color:var(--line); color:var(--ink); background:var(--surface);}
+  .btn-mega.secondary:hover{background:var(--paper); border-color:var(--ink-soft);}
+
+  .card{background:var(--surface); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow); border:1px solid var(--line);}
+  
+  .stat-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:14px; margin-bottom:18px;}
+  .stat-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:16px; 
+    display:flex; flex-direction:column; gap:8px; box-shadow:var(--shadow); transition: .2s; position:relative;
+  }
+  .stat-card.clickable { cursor: pointer; }
+  .stat-card.clickable:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-color: var(--gold); }
+  .stat-card.clickable::after { content: "🔍 التفاصيل"; position: absolute; top: 12px; left: 12px; font-size: 10px; color: var(--gold-deep); background: var(--gold-bg); padding: 2px 6px; border-radius: 4px; opacity: 0; transition: 0.2s; font-weight: bold;}
+  .stat-card.clickable:hover::after { opacity: 1; }
+  
+  .stat-card.highlight{background:var(--ink); border-color:var(--ink);}
+  .stat-card.highlight .stat-label{color:#9AA0AE;}
+  .stat-card.highlight .stat-value{color:#fff;}
+  .stat-card.highlight.clickable:hover { border-color: var(--gold); }
+  
+  .stat-label{font-size:12.5px; color:var(--ink-soft); font-weight:500;}
+  .stat-value{font-family:'Cairo',sans-serif; font-size:21px; font-weight:800;}
+  
+  .dash-lower{display:grid; grid-template-columns:1.4fr 1fr; gap:14px; margin-bottom:8px;}
+  .donut{width:150px; height:150px; border-radius:50%; margin:0 auto 16px; display:flex; align-items:center; justify-content:center;}
+  .donut-hole{width:96px; height:96px; border-radius:50%; background:var(--surface); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;}
+  .donut-hole b{font-family:'Cairo',sans-serif; font-size:14px;}
+  .donut-hole span{font-size:10.5px; color:var(--ink-soft); margin-top:2px;}
+  .legend{list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px; font-size:13px;}
+  .legend li{display:flex; align-items:center; gap:8px;}
+  .legend i{width:10px; height:10px; border-radius:3px; display:inline-block;}
+
+  .photog-grid, .halls-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px;}
+  .events-list{display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:12px;}
+
+  .photog-card, .hall-card, .event-card{display:flex; flex-direction:column; gap:12px;}
+  
+  .event-card { padding: 14px; gap: 8px; display:flex; flex-direction:column; border-radius: var(--radius-sm); border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow); }
+  .event-card:hover { border-color: var(--ink-soft); }
+  .event-top{display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:4px;}
+  .event-top h4{font-size:14px; margin-top:4px;}
+  .event-revenue span{display:block; font-family:'Cairo',sans-serif; font-weight:800; font-size:15px; color:var(--ok);}
+  .event-revenue label{font-size:10px; color:var(--ink-soft);}
+  .event-body { display: flex; flex-direction: column; gap: 4px; }
+  .event-body p{font-size:12.5px; color: var(--ink2); margin:0;}
+  
+  .badge{display:inline-flex; align-items:center; font-size:10px; font-weight:800; padding:2px 8px; border-radius:999px;}
+  .badge.ok{background:var(--ok-bg); color:var(--ok);}
+  .badge.gold{background:var(--gold-bg); color:var(--gold-deep);}
+  .badge.blue{background:#E8F0FE; color:#1A73E8;}
+  .badge.danger{background:var(--danger-bg); color:var(--danger);}
+  
+  .badge.available { background: var(--ok-bg); color: var(--ok); }
+  .badge.borrowed { background: #FFF3E0; color: #E65100; }
+  .badge.maintenance { background: var(--danger-bg); color: var(--danger); }
+
+  .photog-top{display:flex; align-items:center; gap:12px;}
+  .avatar{width:44px; height:44px; border-radius:50%; background:var(--gold-bg); color:var(--gold-deep); display:flex; align-items:center; justify-content:center; font-family:'Cairo',sans-serif; font-weight:800; font-size:15px; flex-shrink:0;}
+  .photog-stats{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; background:var(--paper); border-radius:10px; padding:10px;}
+  .photog-stats div{display:flex; flex-direction:column; align-items:center; text-align:center; gap:3px;}
+  .photog-stats span{font-family:'Cairo',sans-serif; font-weight:800; font-size:13.5px;}
+  .photog-stats label{font-size:10.5px; color:var(--ink-soft);}
+  .photog-stats .due span{color:var(--danger);}
+  .photog-actions{display:flex; gap:8px; flex-wrap:wrap; margin-top:auto;}
+  .photog-actions > *{flex:1;}
+
+  .hall-card{align-items:center; text-align:center; padding: 20px;}
+  .hall-icon{font-size:36px; margin-bottom: 8px;}
+  .empty-state{grid-column:1/-1; text-align:center; padding:50px 20px; color:var(--ink-soft); background: var(--surface); border-radius: var(--radius); border: 1px dashed var(--line);}
+
+  .form-field{display:flex; flex-direction:column; gap:6px; margin-bottom:14px; text-align: right;}
+  .form-field label{font-size:12.5px; font-weight:700; color:var(--ink-soft);}
+  .form-field input, .form-field select{border:1px solid var(--line); border-radius:9px; padding:10px 12px; font-size:14px; background:#fff; color:var(--ink); width: 100%;}
+  .form-field input:focus, .form-field select:focus{outline:2px solid var(--gold); outline-offset:1px; border-color:var(--gold);}
+  .form-grid{display:grid; grid-template-columns:1fr 1fr; gap:0 14px;}
+  .form-grid .full{grid-column:1/-1;}
+  
+  .check-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:8px; margin-bottom:8px;}
+  .check-item{display:flex; align-items:center; gap:8px; background:var(--paper); border:1px solid var(--line); border-radius:9px; padding:9px 10px; font-size:13.5px; cursor:pointer; transition:.2s;}
+  .check-item input{width:16px; height:16px; accent-color:var(--gold);}
+  
+  .equip-row{display:grid; grid-template-columns:1.2fr 1.2fr 100px 36px; gap:8px; margin-bottom:8px; align-items:center;}
+  .equip-row select, .equip-row input{border:1px solid var(--line); border-radius:9px; padding:9px 10px; font-size:13.5px;}
+  
+  .data-table{width:100%; border-collapse:collapse; font-size:13.5px;}
+  .data-table th{text-align:right; color:var(--ink-soft); font-weight:700; font-size:12px; padding:10px 8px; border-bottom:2px solid var(--line);}
+  .data-table td{padding:10px 8px; border-bottom:1px solid var(--line);}
+  .data-table tfoot td{border-top:2px solid var(--line); border-bottom:none; padding-top:12px;}
+
+  .invoice-summary{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:16px; background:var(--paper); border-radius:10px; padding:14px;}
+  .invoice-summary div{display:flex; justify-content:space-between; font-size:13.5px; padding:4px 0;}
+  .invoice-summary .total{grid-column:1/-1; border-top:1px dashed var(--line); padding-top:10px; font-weight:800; color:var(--gold-deep); font-size:15px;}
+
+  .modal-overlay{position:fixed; inset:0; background:rgba(20,23,31,.55); display:flex; align-items:center; justify-content:center; z-index:2000; padding:20px; backdrop-filter:blur(2px);}
+  .modal{background:#fff; border-radius:16px; width:100%; max-width:640px; max-height:88vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,.3);}
+  .modal-header{display:flex; align-items:center; justify-content:space-between; padding:18px 20px; border-bottom:1px solid var(--line); position:sticky; top:0; background:#fff; z-index:2;}
+  .modal-header h3{font-size:16.5px;}
+  .modal-body{padding:20px;}
+  .modal-footer{display:flex; justify-content:flex-end; gap:10px; padding:16px 20px; border-top:1px solid var(--line); position:sticky; bottom:0; background:#fff;}
+
+  #toast-root{position:fixed; bottom:22px; left:22px; z-index:9999; display:flex; flex-direction:column; gap:8px;}
+  .toast{background:var(--ink); color:#fff; padding:12px 18px; border-radius:10px; font-size:13.5px; font-weight:600; opacity:0; transform:translateY(10px); transition:.25s; box-shadow:var(--shadow);}
+  .toast.error{background:var(--danger);}
+  .toast.show{opacity:1; transform:translateY(0);}
+
+  body.portal-mode .app { display: none !important; }
+  .portal-container { max-width: 800px; margin: 0 auto; padding: 16px; display: none; flex-direction: column;}
+  .portal-container.active { display: flex; }
+  .portal-header { background: var(--ink); color: #fff; padding: 24px 20px; border-radius: var(--radius); margin-bottom: 20px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
+  .portal-header h2 { font-size: 22px; display: flex; align-items: center; justify-content: space-between; }
+  .portal-header .month-filter { background: #252A38; border-color: #3A4150; align-self: flex-start; }
+  .portal-header .month-filter input { color: #fff; }
+  .portal-header .month-filter .icon-btn { background: #14171F; color: #fff; }
+  .blocked-screen { background: var(--danger-bg); color: var(--danger); padding: 40px 20px; border-radius: var(--radius); text-align: center; border: 1px solid var(--danger); }
+
+  .msg-template-btn { display:flex; align-items:center; gap:12px; width:100%; padding:14px; background:var(--paper); border:1px solid var(--line); border-radius:12px; text-align:right; margin-bottom:10px; transition:0.2s;}
+  .msg-template-btn:hover { background:var(--surface); border-color:var(--ok); transform:translateX(-5px); box-shadow: var(--shadow); }
+  .msg-template-btn .icon { font-size: 24px; }
+  .msg-template-btn .text h4 { font-size: 15px; color:var(--ink); margin-bottom: 2px;}
+  .msg-template-btn .text p { font-size: 12px; color:var(--ink-soft);}
+
+  .settings-upload-btn { display:inline-block; padding:8px 12px; background:var(--paper); border:1px dashed var(--ink-soft); border-radius:8px; cursor:pointer; font-size:13px; text-align:center; width:100%; transition:0.2s;}
+  .settings-upload-btn:hover { background:var(--line); border-color:var(--gold); }
+  .settings-preview { width:80px; height:80px; border-radius:12px; object-fit:cover; margin-top:10px; border:1px solid var(--line); display:none;}
+
+  @media (max-width:900px){ .stat-grid{grid-template-columns:repeat(2,1fr);} .dash-lower{grid-template-columns:1fr;} .form-grid{grid-template-columns:1fr;} }
+  @media (max-width:760px){
+    body:not(.portal-mode) .sidebar{position:static; width:100%; height:auto; flex-direction:row; align-items:center; padding:12px 14px; overflow-x:auto; gap:14px;}
+    body:not(.portal-mode) .brand span{display:none;}
+    body:not(.portal-mode) .nav{flex-direction:row;}
+    body:not(.portal-mode) .nav-btn{white-space:nowrap;}
+    body:not(.portal-mode) .sidebar-foot{display:none;}
+    body:not(.portal-mode) .content{margin-right:0; padding:16px;}
+    .equip-row{grid-template-columns:1fr 1fr; grid-template-areas:"owner owner" "name price" "remove remove";}
+  }
+</style>
+</head>
+<body>
+
+<div id="auth-view" class="full-screen-view">
+    <div class="auth-box">
+        <div class="auth-logo" style="background:linear-gradient(135deg, var(--ink) 0%, #2A3040 100%); border:1px solid rgba(184, 134, 59, 0.4); box-shadow: 0 4px 12px rgba(184, 134, 59, 0.15); font-family:'Inter', sans-serif; font-weight:900;">L</div>
+        <h2>مرحباً بك في CinePRO </h2>
+        <p>نظام إدارة الاستوديوهات والمناسبات الاحترافي</p>
+        
+        <div id="auth-login-form">
+            <div class="form-field"><input type="email" id="login-email" placeholder="البريد الإلكتروني"></div>
+            <div class="form-field"><input type="password" id="login-pass" placeholder="كلمة المرور"></div>
+            <button class="btn-primary" style="width:100%; padding: 12px; margin-top: 10px;" onclick="handleLogin()">تسجيل الدخول</button>
+            <p style="margin-top: 20px; cursor: pointer; color: var(--gold-deep); font-weight: 600;" onclick="toggleAuthMode()">لا تملك حساباً؟ أنشئ حسابك الآن وابدأ فترتك التجريبية</p>
+        </div>
+
+        <div id="auth-register-form" style="display:none;">
+            <div class="form-field"><input type="text" id="reg-company" placeholder="اسم الاستوديو / الشركة"></div>
+            <div class="form-field"><input type="email" id="reg-email" placeholder="البريد الإلكتروني"></div>
+            <div class="form-field"><input type="password" id="reg-pass" placeholder="كلمة المرور"></div>
+            <button class="btn-primary" style="width:100%; padding: 12px; margin-top: 10px;" onclick="handleRegister()">إنشاء حساب مجاني (14 يوم تجربة)</button>
+            <p style="margin-top: 20px; cursor: pointer; color: var(--gold-deep); font-weight: 600;" onclick="toggleAuthMode()">لديك حساب بالفعل؟ سجل الدخول</p>
+        </div>
+    </div>
+</div>
+
+<div id="expired-view" class="full-screen-view">
+    <div class="paywall-box">
+        <div class="paywall-icon">⚠️</div>
+        <h2 style="color: var(--danger); margin-bottom: 12px;">الحساب غير مفعل</h2>
+        <p style="color: var(--ink-soft); font-size: 15px; line-height: 1.6; margin-bottom: 24px;" id="expired-msg">
+            انتهت فترة الاشتراك أو تم إيقافه مؤقتاً.<br>
+            للاستمرار في استخدام النظام والوصول لبياناتك، يرجى التواصل لتسديد المستحقات.
+        </p>
+        
+        <div style="background: var(--paper); padding: 16px; border-radius: 12px; margin-bottom: 24px; text-align: center;">
+            <p style="font-weight: 700; margin-bottom: 8px;">لتجديد الاشتراك، قم بالتحويل على الرقم التالي:</p>
+            <h3 style="font-size: 24px; color: var(--ink); letter-spacing: 2px;">01126810107</h3>
+            <p class="small muted" style="margin-top: 4px;">(فودافون كاش أو إنستاباي - InstaPay)</p>
+        </div>
+        
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-wa" onclick="window.open('https://wa.me/201126810107?text=مرحبا، قمت بتحويل قيمة تجديد اشتراك Lakta PRO. ايميل حسابي هو: '+firebase.auth().currentUser.email)" style="flex: 2; padding: 12px;">
+                💬 إرسال إيصال التحويل (واتساب)
+            </button>
+            <button class="btn-secondary" onclick="firebase.auth().signOut()" style="flex: 1;">تسجيل خروج</button>
+        </div>
+    </div>
+</div>
+
+<div id="super-admin-view" class="full-screen-view">
+    <div class="super-admin-container">
+        <div class="admin-header">
+            <h2>لوحة تحكم الإدارة العليا (Super Admin)</h2>
+            <button class="btn-secondary sm" onclick="firebase.auth().signOut()">تسجيل خروج</button>
+        </div>
+        <div class="admin-body">
+            <table class="data-table">
+                <thead>
+                    <tr><th>الاستوديو</th><th>البريد الإلكتروني</th><th>الحالة</th><th>انتهاء الصلاحية</th><th>الإجراءات</th></tr>
+                </thead>
+                <tbody id="admin-studios-list"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="app" id="main-app-view">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo" id="sidebar-logo">L</div>
+      <div><h1 style="font-family:'Inter', sans-serif; letter-spacing: 0.5px;">Lakta <span class="pro-badge">PRO</span></h1><span id="sidebar-company-name">إدارة الاستوديوهات</span></div>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn active" data-view="dashboard" onclick="switchView('dashboard')">الرئيسية</button>
+      <button class="nav-btn" data-view="resources" onclick="switchView('resources')">الفريق والقاعات</button>
+      <button class="nav-btn" data-view="inventory" onclick="switchView('inventory')">العهدة والمعدات</button>
+      <button class="nav-btn" data-view="events" onclick="switchView('events')">أرشيف الأعمال</button>
+      <button class="nav-btn" data-view="expenses" onclick="switchView('expenses')">المصروفات والتصفيات</button>
+    </nav>
+    <div class="sidebar-foot">
+        نسخة مرخصة للاستخدام التجاري<br>
+        <span style="opacity: 0.6; margin-top:4px; display:block;" id="subscription-status-text">...</span>
+    </div>
+  </aside>
+
+  <main class="content">
+    <header class="topbar">
+      <div class="month-filter">
+        <button class="icon-btn" onclick="shiftMonth(-1)">‹</button>
+        <input type="month" id="month-input" onchange="onMonthChange(this.value)">
+        <button class="icon-btn" onclick="shiftMonth(1)">›</button>
+      </div>
+      <div class="user-menu">
+          <span id="topbar-email">...</span>
+          <button class="btn-secondary sm" onclick="openStudioSettingsModal()">⚙️ الإعدادات</button>
+          <button class="btn-secondary sm" onclick="firebase.auth().signOut()">خروج</button>
+      </div>
+    </header>
+
+    <section id="view-dashboard" class="view active"></section>
+    <section id="view-resources" class="view"></section>
+    <section id="view-inventory" class="view"></section>
+    <section id="view-events" class="view"></section>
+    <section id="view-expenses" class="view"></section>
+  </main>
+</div>
+
+<div id="portal-view" class="full-screen-view portal-mode">
+    <div class="portal-container" id="portal-content"></div>
+</div>
+
+<div id="modal-root"></div>
+<div id="toast-root"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyB6KjJIu7EJ0qhK9njVx8uEc9fT4ChmJrY",
+  authDomain: "laqta-studio-629f6.firebaseapp.com",
+  projectId: "laqta-studio-629f6",
+  storageBucket: "laqta-studio-629f6.firebasestorage.app",
+  messagingSenderId: "40584837001",
+  appId: "1:40584837001:web:9d7d96dccbe59d5b0f5358"
+};
+
+const SUPER_ADMIN_EMAIL = 'admin@lakta.pro';
+
+const DEFAULT_SERVICES = [
+  { id: 's1', name: 'شاشة عرض' }, { id: 's2', name: 'تصوير درون' },
+  { id: 's3', name: 'إضاءة ليزر' }, { id: 's4', name: 'كاميرا فوتوغرافي إضافية' }
+];
+
+let db, auth;
+let currentUser = null;
+let currentStudioData = null;
+let state = { photographers: [], halls: [], events: [], expenses: [], payouts: [], services: DEFAULT_SERVICES, inventory: [], borrows: [] };
+
+let currentMonth = new Date().toISOString().slice(0,7);
+let currentView = 'dashboard';
+const ARABIC_MONTHS = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+
+const urlParams = new URLSearchParams(window.location.search);
+const portalStudioId = urlParams.get('s');
+const portalPhotographerPhone = urlParams.get('p');
+const isPortalMode = portalStudioId && portalPhotographerPhone;
+
+function initFirebase(){
+  if(firebaseConfig.apiKey === 'YOUR_API_KEY') return false;
+  try{
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    auth = firebase.auth();
+    return true;
+  }catch(e){ console.error('Firebase Error:', e); return false; }
+}
+
+function initApp() {
+    const isReady = initFirebase();
+    if(!isReady) {
+        document.body.innerHTML = `<div style="padding:40px; text-align:center; color:red;"><h3>النظام غير متصل بقاعدة البيانات.</h3></div>`;
+        return;
+    }
+
+    if(isPortalMode) {
+        handlePortalFlow();
+    } else {
+        auth.onAuthStateChanged(user => {
+            currentUser = user;
+            if(user) {
+                if(user.email === SUPER_ADMIN_EMAIL) {
+                    showView('super-admin-view');
+                    loadSuperAdminData();
+                } else {
+                    loadStudioData(user.uid);
+                }
+            } else {
+                showView('auth-view');
+            }
+        });
+    }
+}
+
+function showView(viewId) {
+    document.querySelectorAll('.full-screen-view, .app').forEach(el => el.classList.remove('active'));
+    document.getElementById(viewId).classList.add('active');
+}
+
+let isLoginMode = true;
+function toggleAuthMode() {
+    isLoginMode = !isLoginMode;
+    document.getElementById('auth-login-form').style.display = isLoginMode ? 'block' : 'none';
+    document.getElementById('auth-register-form').style.display = isLoginMode ? 'none' : 'block';
+}
+
+async function handleRegister() {
+    const company = document.getElementById('reg-company').value.trim();
+    const email = document.getElementById('reg-email').value.trim();
+    const pass = document.getElementById('reg-pass').value.trim();
+    
+    if(!company || !email || !pass) { showToast('يرجى ملء جميع الحقول', 'error'); return; }
+    
+    try {
+        const cred = await auth.createUserWithEmailAndPassword(email, pass);
+        const trialEndsAt = Date.now() + (14 * 24 * 60 * 60 * 1000); 
+        
+        await db.collection('studios').doc(cred.user.uid).set({
+            companyName: company,
+            email: email,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            trialEndDate: trialEndsAt,
+            subscriptionEndDate: 0,
+            status: 'active',
+            photographers: [], halls: [], events: [], expenses: [], payouts: [], services: DEFAULT_SERVICES, inventory: [], borrows: []
+        });
+        
+        showToast('تم إنشاء الحساب بنجاح! مرحباً بك في فترتك التجريبية.');
+    } catch(err) {
+        showToast(err.message, 'error');
+    }
+}
+
+async function handleLogin() {
+    const email = document.getElementById('login-email').value.trim();
+    const pass = document.getElementById('login-pass').value.trim();
+    if(!email || !pass) { showToast('أدخل البريد وكلمة المرور', 'error'); return; }
+    try { await auth.signInWithEmailAndPassword(email, pass); } 
+    catch(err) { showToast('بيانات الدخول غير صحيحة', 'error'); }
+}
+
+let unsubData = null;
+function loadStudioData(uid) {
+    if(unsubData) unsubData();
+    
+    unsubData = db.collection('studios').doc(uid).onSnapshot(doc => {
+        if(doc.exists) {
+            currentStudioData = doc.data();
+            
+            const now = Date.now();
+            const trialEnd = currentStudioData.trialEndDate || 0;
+            const subEnd = currentStudioData.subscriptionEndDate || 0;
+            const status = currentStudioData.status || 'active';
+            
+            if(status === 'paused' || (now > trialEnd && now > subEnd)) {
+                document.getElementById('expired-msg').innerHTML = status === 'paused' 
+                  ? 'تم إيقاف اشتراكك مؤقتاً من قبل الإدارة.<br>يرجى التواصل لتسوية المستحقات.'
+                  : 'انتهت فترة الاشتراك أو التجربة.<br>للاستمرار في استخدام النظام والوصول لبياناتك، يرجى تجديد باقة الاشتراك.';
+                showView('expired-view');
+                return;
+            }
+
+            state = {
+                photographers: currentStudioData.photographers || [],
+                halls: currentStudioData.halls || [],
+                events: currentStudioData.events || [],
+                expenses: currentStudioData.expenses || [],
+                payouts: currentStudioData.payouts || [],
+                services: currentStudioData.services || DEFAULT_SERVICES,
+                inventory: currentStudioData.inventory || [],
+                borrows: currentStudioData.borrows || []
+            };
+            
+            // UI Updates
+            document.getElementById('sidebar-company-name').textContent = currentStudioData.companyName || 'استوديو';
+            document.getElementById('topbar-email').textContent = currentStudioData.email || '';
+            
+            // Update Logo
+            const logoEl = document.getElementById('sidebar-logo');
+            if(currentStudioData.logoUrl) {
+                logoEl.innerHTML = `<img src="${currentStudioData.logoUrl}" alt="Logo">`;
+                logoEl.style.border = 'none';
+            } else {
+                logoEl.innerHTML = (currentStudioData.companyName||'L').charAt(0).toUpperCase();
+                logoEl.style.border = '1px solid var(--gold)';
+            }
+            
+            let statusText = 'اشتراك مفعل';
+            if(now <= trialEnd && now > subEnd) {
+                const daysLeft = Math.ceil((trialEnd - now) / (1000*60*60*24));
+                statusText = `فترة تجريبية (${daysLeft} أيام متبقية)`;
+            }
+            document.getElementById('subscription-status-text').textContent = statusText;
+
+            showView('main-app-view');
+            renderCurrentView();
+            
+        } else {
+            showToast('لم يتم العثور على بيانات الاستوديو', 'error');
+            auth.signOut();
+        }
+    });
+}
+
+async function saveState(){
+    if(!currentUser || !db) return;
+    try {
+        await db.collection('studios').doc(currentUser.uid).update({
+            photographers: state.photographers,
+            halls: state.halls,
+            events: state.events,
+            expenses: state.expenses,
+            payouts: state.payouts,
+            services: state.services,
+            inventory: state.inventory,
+            borrows: state.borrows
+        });
+    } catch(e) {
+        showToast('خطأ في حفظ البيانات', 'error');
+    }
+}
+
+function openStudioSettingsModal() {
+    const data = currentStudioData || {};
+    const html = `
+        <div class="modal-header"><h3>⚙️ إعدادات الحساب</h3><button class="icon-btn" onclick="closeModal()">✕</button></div>
+        <div class="modal-body">
+            <h4 class="section-title" style="margin-top:0">بيانات الاستوديو</h4>
+            <div class="form-field">
+                <label>اسم الاستوديو</label>
+                <input type="text" id="set-company" value="${escapeHtml(data.companyName||'')}">
+            </div>
+            <div class="form-field">
+                <label>شعار الاستوديو (Logo)</label>
+                <label class="settings-upload-btn">
+                    اختر صورة من جهازك
+                    <input type="file" id="set-logo" accept="image/png, image/jpeg" style="display:none;" onchange="previewSettingsLogo(this)">
+                </label>
+                <img id="set-logo-preview" class="settings-preview" src="${data.logoUrl||''}" style="display:${data.logoUrl?'block':'none'}">
+                <textarea id="set-logo-b64" style="display:none;">${data.logoUrl||''}</textarea>
+            </div>
+            
+            <hr style="border:0; border-top:1px solid var(--line); margin: 24px 0;">
+            
+            <h4 class="section-title">بيانات الدخول (البريد وكلمة المرور)</h4>
+            <p class="muted small" style="margin-bottom:12px;">لتغيير البريد أو كلمة المرور، يجب إدخال كلمة المرور الحالية أولاً.</p>
+            
+            <div class="form-field">
+                <label>البريد الإلكتروني</label>
+                <input type="email" id="set-email" value="${escapeHtml(currentUser.email||'')}">
+            </div>
+            <div class="form-field">
+                <label>كلمة المرور الجديدة (اختياري)</label>
+                <input type="password" id="set-new-pass" placeholder="اتركه فارغاً إذا لم ترد تغييره">
+            </div>
+            <div class="form-field" style="background:var(--danger-bg); padding:12px; border-radius:10px; border:1px dashed var(--danger);">
+                <label style="color:var(--danger)">كلمة المرور الحالية (مطلوب للحفظ)</label>
+                <input type="password" id="set-curr-pass" placeholder="أدخل كلمة المرور لتأكيد التعديلات">
+            </div>
+        </div>
+        <div class="modal-footer"><button class="btn-secondary" onclick="closeModal()">إلغاء</button><button class="btn-primary" onclick="saveStudioSettings()">حفظ التعديلات</button></div>
+    `;
+    openModal(html);
+}
+
+function previewSettingsLogo(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        if(file.size > 500 * 1024) { showToast('حجم الصورة كبير جداً. أقصى حد 500 كيلوبايت.', 'error'); input.value=''; return; }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('set-logo-preview').src = e.target.result;
+            document.getElementById('set-logo-preview').style.display = 'block';
+            document.getElementById('set-logo-b64').value = e.target.result;
+        }
+        reader.readAsDataURL(file);
+    }
+}
+
+async function saveStudioSettings() {
+    const company = document.getElementById('set-company').value.trim();
+    const logoBase64 = document.getElementById('set-logo-b64').value;
+    const email = document.getElementById('set-email').value.trim();
+    const newPass = document.getElementById('set-new-pass').value;
+    const currPass = document.getElementById('set-curr-pass').value;
+
+    if(!company) { showToast('اسم الاستوديو مطلوب', 'error'); return; }
+
+    try {
+        await db.collection('studios').doc(currentUser.uid).update({ companyName: company, logoUrl: logoBase64 || null });
+        if (email !== currentUser.email || newPass) {
+            if(!currPass) { showToast('يرجى إدخال كلمة المرور الحالية لتغيير الإيميل أو الباسورد', 'error'); return; }
+            const cred = firebase.auth.EmailAuthProvider.credential(currentUser.email, currPass);
+            await currentUser.reauthenticateWithCredential(cred);
+            
+            if (email !== currentUser.email) { await currentUser.updateEmail(email); await db.collection('studios').doc(currentUser.uid).update({email: email});}
+            if (newPass) { await currentUser.updatePassword(newPass); }
+        }
+        showToast('تم تحديث الإعدادات بنجاح');
+        closeModal();
+    } catch (e) {
+        showToast(e.message, 'error');
+    }
+}
+
+function loadSuperAdminData() {
+    db.collection('studios').onSnapshot(snap => {
+        const tbody = document.getElementById('admin-studios-list');
+        let html = '';
+        snap.forEach(doc => {
+            const data = doc.data();
+            if(data.email === SUPER_ADMIN_EMAIL) return; 
+            
+            const now = Date.now();
+            let status = 'منتهي';
+            let statusClass = 'danger';
+            
+            if(data.status === 'paused') { status = 'موقوف مؤقتاً'; statusClass = 'danger'; }
+            else if (now <= (data.subscriptionEndDate || 0)) { status = 'مفعل (اشتراك)'; statusClass = 'ok'; }
+            else if (now <= (data.trialEndDate || 0)) { status = 'مفعل (تجريبي)'; statusClass = 'gold'; }
+            
+            const expDate = data.subscriptionEndDate ? new Date(data.subscriptionEndDate).toLocaleDateString('ar-EG') : '—';
+            
+            html += `<tr>
+                <td><b>${escapeHtml(data.companyName||'—')}</b></td>
+                <td>${escapeHtml(data.email)}</td>
+                <td><span class="badge ${statusClass}">${status}</span></td>
+                <td>${expDate}</td>
+                <td style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <button class="btn-primary sm" title="تجديد شهر" onclick="renewSub('${doc.id}', 1)">+1m</button>
+                    <button class="btn-primary sm" title="تجديد سنة" onclick="renewSub('${doc.id}', 12)">+1y</button>
+                    ${data.status === 'paused' 
+                        ? `<button class="btn-secondary sm" style="color:var(--ok)" onclick="updateStudioStatus('${doc.id}', 'active')">▶ تفعيل</button>`
+                        : `<button class="btn-secondary sm" style="color:var(--gold-deep)" onclick="updateStudioStatus('${doc.id}', 'paused')">⏸ إيقاف</button>`
+                    }
+                    <button class="btn-danger sm" onclick="confirmAction('سيتم حذف الاستوديو وجميع بياناته نهائياً. تأكيد؟', 'deleteStudio', '${doc.id}')">🗑</button>
+                </td>
+            </tr>`;
+        });
+        tbody.innerHTML = html;
+    });
+}
+
+async function renewSub(uid, monthsToAdd) {
+    const docRef = db.collection('studios').doc(uid);
+    const docSnap = await docRef.get();
+    if(!docSnap.exists) return;
+    const data = docSnap.data();
+    let currentEnd = data.subscriptionEndDate || 0;
+    if(currentEnd < Date.now()) currentEnd = Date.now();
+    const newEnd = currentEnd + (monthsToAdd * 30 * 24 * 60 * 60 * 1000);
+    await docRef.update({ subscriptionEndDate: newEnd, status: 'active' });
+    showToast(`تم تجديد الاشتراك`);
+}
+
+async function updateStudioStatus(uid, status) {
+    await db.collection('studios').doc(uid).update({ status: status });
+    showToast(status === 'paused' ? 'تم الإيقاف المؤقت' : 'تم تفعيل الحساب');
+}
+async function deleteStudio(uid) {
+    try { await db.collection('studios').doc(uid).delete(); showToast('تم حذف الاستوديو نهائياً'); } catch(e) { showToast('خطأ في الحذف', 'error'); }
+}
+
+async function handlePortalFlow() {
+    showView('portal-view');
+    const container = document.getElementById('portal-content');
+    
+    try {
+        const docSnap = await db.collection('studios').doc(portalStudioId).get();
+        if(!docSnap.exists) { throw new Error('الاستوديو غير موجود'); }
+        
+        const studioData = docSnap.data();
+        const p = (studioData.photographers||[]).find(x => normalizePhone(x.phone) === normalizePhone(portalPhotographerPhone) || x.id === portalPhotographerPhone);
+        
+        if(!p) { throw new Error('لم نتمكن من العثور على بيانات المصور.'); }
+        
+        const localKey = `lakta_dev_token_${p.id}`;
+        let localToken = localStorage.getItem(localKey);
+        if(!localToken) { localToken = uid(); }
+
+        if(!p.deviceToken) {
+            p.deviceToken = localToken;
+            localStorage.setItem(localKey, localToken);
+            await db.collection('studios').doc(portalStudioId).update({ photographers: studioData.photographers });
+        } else if (p.deviceToken !== localToken) {
+            container.innerHTML = `
+                <div class="blocked-screen">
+                    <div style="font-size:48px; margin-bottom:16px;">📱🔒</div>
+                    <h2>عذراً، هذا الرابط مستخدم على جهاز آخر</h2>
+                    <p style="margin-top:10px;">لأسباب أمنية ولحماية بياناتك المالية، يُسمح بفتح رابط المصور على هاتف واحد فقط.</p>
+                    <p style="margin-top:10px; font-weight:bold;">إذا كنت قد غيرت هاتفك، يرجى طلب "إعادة ضبط الجهاز" من إدارة الاستوديو.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        state = { photographers: studioData.photographers || [], halls: studioData.halls || [], events: studioData.events || [], payouts: studioData.payouts || [] };
+        renderPortalContent(p);
+    } catch(e) {
+        container.innerHTML = `<div class="blocked-screen"><h2>${e.message}</h2></div>`;
+    }
+}
+
+function resetPhotographerDevice(pid) {
+    const p = state.photographers.find(x=>x.id===pid);
+    if(p) { p.deviceToken = null; saveState(); showToast('تم إعادة ضبط الرابط بنجاح.'); }
+}
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function escapeHtml(str){ return String(str==null?'':str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmtMoney(n){ return (Number(n) || 0).toLocaleString('en-US', {maximumFractionDigits:0}) + ' ج.م'; }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function formatDateAr(dateStr){
+  if(!dateStr) return '—';
+  const parts = dateStr.split('-').map(Number); return `${parts[2]} ${ARABIC_MONTHS[parts[1]-1]} ${parts[0]}`;
+}
+function formatMonthLabel(monthStr){
+  const parts = monthStr.split('-').map(Number); return `${ARABIC_MONTHS[parts[1]-1]} ${parts[0]}`;
+}
+function monthOf(dateStr){ return (dateStr||'').slice(0,7); }
+function normalizePhone(phone){
+  let d = (phone||'').replace(/\D/g,'');
+  if(!d) return '';
+  if(d.startsWith('00')) d = d.slice(2);
+  if(d.startsWith('0')) d = '20' + d.slice(1);
+  else if(!d.startsWith('20') && d.length===10) d = '20' + d;
+  return d;
+}
+function waLink(phone, text){ return `https://wa.me/${normalizePhone(phone)}?text=${encodeURIComponent(text)}`; }
+function initials(name){ return (name||'؟').trim().slice(0,1); }
+function photographerName(id){ const p = state.photographers.find(x=>x.id===id); return p ? p.name : 'محذوف'; }
+function hallName(id){ const h = state.halls.find(x=>x.id===id); return h ? h.name : '—'; }
+
+function eventsInMonth(month){ return state.events.filter(e => monthOf(e.date) === month); }
+function expensesInMonth(month){ return state.expenses.filter(e => monthOf(e.date) === month); }
+function payoutsInMonth(month){ return state.payouts.filter(p => monthOf(p.date) === month); }
+
+function photographerStats(pid, month = currentMonth){
+  const evsMonth = eventsInMonth(month).filter(e => (e.photographerIds||[]).includes(pid));
+  const datesMonth = [...new Set(evsMonth.map(e=>e.date))];
+  const p = state.photographers.find(x=>x.id===pid);
+  const wage = p ? (Number(p.wage)||0) : 0;
+  
+  const wageMonth = datesMonth.length * wage;
+  let equipmentItemsMonth = [], bonusItemsMonth = [];
+  
+  evsMonth.forEach(e=>{
+    (e.equipment||[]).filter(eq=>eq.photographerId===pid).forEach(eq=>{ equipmentItemsMonth.push({ name:eq.name, price:Number(eq.price)||0, date:e.date, hallId:e.hallId }); });
+    (e.bonuses||[]).filter(b=>b.photographerId===pid).forEach(b=>{ bonusItemsMonth.push({ desc:b.desc, amount:Number(b.amount)||0, date:e.date, hallId:e.hallId }); });
+  });
+  
+  const equipmentMonth = equipmentItemsMonth.reduce((s,x)=>s+x.price,0);
+  const bonusMonth = bonusItemsMonth.reduce((s,x)=>s+x.amount,0);
+  
+  const evsAll = state.events.filter(e => (e.photographerIds||[]).includes(pid));
+  const datesAll = [...new Set(evsAll.map(e=>e.date))];
+  const wageAll = datesAll.length * wage;
+  let eqAll = 0, bnAll = 0;
+  evsAll.forEach(e=>{
+    (e.equipment||[]).filter(eq=>eq.photographerId===pid).forEach(eq=>{ eqAll += (Number(eq.price)||0); });
+    (e.bonuses||[]).filter(b=>b.photographerId===pid).forEach(b=>{ bnAll += (Number(b.amount)||0); });
+  });
+  
+  const totalEarned = wageAll + eqAll + bnAll;
+  const totalPayouts = state.payouts.filter(x=>x.photographerId===pid).reduce((s,x)=>s+(Number(x.amount)||0), 0);
+  const currentBalance = totalEarned - totalPayouts;
+  
+  return { eventsMonth: evsMonth, daysMonth: datesMonth.length, wage, wageMonth, equipmentItemsMonth, equipmentMonth, bonusItemsMonth, bonusMonth, totalEarned, totalPayouts, currentBalance, totalDaysAll: datesAll.length };
+}
+
+function dashboardStats(month){
+  const evs = eventsInMonth(month);
+  let revenue = 0, flashFund = 0;
+  const hallCounts = {};
+  
+  evs.forEach(e => {
+    revenue += e.type === 'event' ? (Number(e.paidAmount) || 0) : (Number(e.revenue) || 0);
+    flashFund += (Number(e.flashCount)||0) * (Number(e.flashCost)||0);
+    if(e.hallId) hallCounts[e.hallId] = (hallCounts[e.hallId] || 0) + 1;
+  });
+
+  let wages=0, equipment=0, bonuses=0;
+  state.photographers.forEach(p=>{
+    const st = photographerStats(p.id, month);
+    wages += st.wageMonth; equipment += st.equipmentMonth; bonuses += st.bonusMonth;
+  });
+  
+  let expenses = expensesInMonth(month).reduce((s,e)=>s+(Number(e.amount)||0),0);
+  evs.forEach(e => { if(e.type==='daily' && e.expensesAmount) expenses += Number(e.expensesAmount); });
+
+  const net = revenue - wages - equipment - expenses - flashFund - bonuses;
+  return { revenue, wages, equipment, expenses, bonuses, flashFund, net, eventsCount: evs.length, hallCounts };
+}
+
+function buildDonutGradient(stats){
+  const total = stats.wages + stats.equipment + stats.expenses + stats.flashFund + stats.bonuses;
+  if(total <= 0) return 'conic-gradient(var(--line) 0 100%)';
+  const w = stats.wages/total*360, e = stats.equipment/total*360, b = stats.bonuses/total*360, f = stats.flashFund/total*360;
+  return `conic-gradient(var(--gold) 0deg ${w}deg, var(--ink-soft) ${w}deg ${w+e}deg, #7E22CE ${w+e}deg ${w+e+b}deg, var(--ok) ${w+e+b}deg ${w+e+b+f}deg, var(--danger) ${w+e+b+f}deg 360deg)`;
+}
+
+function buildGCalLink(ev){
+  const dateCompact = ev.date.replace(/-/g,'');
+  let datesParam;
+  if(ev.time){
+    const t = ev.time.split(':');
+    const startDT = `${dateCompact}T${t[0]}${t[1]}00`;
+    const endHH = String((parseInt(t[0],10)+3)%24).padStart(2,'0'); // assume 3 hours
+    datesParam = `${startDT}/${dateCompact}T${endHH}${t[1]}00`;
+  } else {
+    const d = new Date(ev.date+'T00:00:00'); d.setDate(d.getDate()+1);
+    datesParam = `${dateCompact}/${d.toISOString().slice(0,10).replace(/-/g,'')}`;
+  }
+  
+  let title = ev.type==='event' ? `📸 حجز مناسبة - ${hallName(ev.hallId)}` : `💼 يومية عمل - ${hallName(ev.hallId)}`;
+  let details = `📌 تفاصيل العمل:\n`;
+  if(ev.clientName) details += `👤 العميل: ${ev.clientName}\n`;
+  if(ev.clientPhone) details += `📱 هاتف العميل: ${ev.clientPhone}\n`;
+  
+  const names = (ev.photographerIds||[]).map(id=>photographerName(id)).join('، ');
+  if(names) details += `\n👥 فريق التصوير: ${names}\n`;
+  
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${datesParam}&details=${encodeURIComponent(details.trim())}&location=${encodeURIComponent(ev.address||'')}`;
+}
+
+function getPortalLink(p) {
+    if(!currentUser) return '';
+    const identifier = normalizePhone(p.phone) || p.id;
+    const url = new URL(window.location.href);
+    url.searchParams.set('s', currentUser.uid);
+    url.searchParams.set('p', identifier);
+    return url.href;
+}
+function copyPortalLink(pid) {
+    const p = state.photographers.find(x=>x.id===pid); if(!p) return;
+    if(!p.phone) { showToast('يرجى إضافة رقم هاتف للمصور أولاً', 'error'); return; }
+    const link = getPortalLink(p);
+    if(navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(link).then(()=>showToast('تم نسخ الرابط!')); }
+    else { const dummy = document.createElement('input'); document.body.appendChild(dummy); dummy.value = link; dummy.select(); document.execCommand('copy'); document.body.removeChild(dummy); showToast('تم نسخ الرابط!'); }
+}
+
+function buildAdvancedDailyReportMessage(p){
+  const st = photographerStats(p.id, currentMonth);
+  const wage = p.wage || 0;
+  
+  const allPayouts = state.payouts.filter(x=>x.photographerId===p.id).sort((a,b)=>new Date(b.date) - new Date(a.date));
+  const totalPayouts = allPayouts.reduce((s,x)=>s+(Number(x.amount)||0), 0);
+  
+  let msg = `*مرحباً ${p.name}* 👋\nإليك تقرير تسوية حسابك:\n\n`;
+
+  if(st.totalDaysAll === 0) {
+      msg += `لا توجد أيام عمل مسجلة لك حتى الآن.\n`;
+  } else if (totalPayouts === 0) {
+      msg += `🔴 *تنبيه تسوية:*\n`;
+      msg += `لقد قمت بتصوير *${st.totalDaysAll} أيام* متتالية بدون قبض حتى الآن.\n`;
+      msg += `إجمالي المستحق لك شامل المعدات والمكافآت: *${fmtMoney(st.currentBalance)}*\n`;
+  } else {
+      const lastPayout = allPayouts[0];
+      const paidDaysApprox = wage > 0 ? Math.floor(totalPayouts / wage) : 0;
+      const remainingDaysApprox = Math.max(0, st.totalDaysAll - paidDaysApprox);
+
+      msg += `إجمالي أيام عملك الكلية: *${st.totalDaysAll} أيام*\n\n`;
+      msg += `✅ *تفاصيل القبض:*\n`;
+      msg += `إجمالي ما تم قبضه سابقاً: *${fmtMoney(totalPayouts)}*\n`;
+      msg += `آخر دفعة استلمتها كانت بمبلغ *${fmtMoney(lastPayout.amount)}* بتاريخ *${formatDateAr(lastPayout.date)}*.\n\n`;
+      
+      msg += `⚠️ *المتبقي المستحق:*\n`;
+      msg += `متبقي لك رصيد بحوالي *${remainingDaysApprox} أيام* عمل (تقريباً).\n`;
+      msg += `إجمالي الرصيد المستحق النهائي (شامل كل شيء): *${fmtMoney(st.currentBalance)}*\n`;
+  }
+
+  msg += `\n──────────────\n`;
+  msg += `🔗 *تابع تفاصيل عملك اليومية عبر البوابة:*\n${getPortalLink(p)}\n\nشكراً لجهودك 🌟`;
+  return msg;
+}
+
+function shareDailyReportWA(pid){
+  const p = state.photographers.find(x=>x.id===pid); if(!p) return;
+  if(!p.phone){ showToast('لا يوجد هاتف مسجل', 'error'); return; }
+  window.open(waLink(p.phone, buildAdvancedDailyReportMessage(p)), '_blank');
+}
+
+function buildAppointmentsMessage(p){
+  const evs = state.events.filter(e => (e.photographerIds||[]).includes(p.id) && e.status !== 'completed').slice().sort((a,b)=>a.date.localeCompare(b.date));
+  if(!evs.length) return `مرحباً ${p.name}، لا توجد مواعيد عمل قادمة مسجلة حالياً.`;
+  let msg = `*مرحباً ${p.name}* 👋\nتذكير بمواعيد عملك القادمة:\n\n`;
+  evs.forEach(e=>{
+    msg += `📅 *${formatDateAr(e.date)}* ${e.time? '⏱️ '+e.time:''}\n🏛️ القاعة: ${hallName(e.hallId)}\n`;
+    msg += `──────────────\n`;
+  });
+  return msg;
+}
+function shareAppointmentsWA(pid){
+  const p = state.photographers.find(x=>x.id===pid); if(!p) return;
+  if(!p.phone){ showToast('لا يوجد هاتف', 'error'); return; }
+  window.open(waLink(p.phone, buildAppointmentsMessage(p)), '_blank');
+}
+
+function openMessageTemplatesModal(pid) {
+    const p = state.photographers.find(x=>x.id===pid); if(!p) return;
+    const st = photographerStats(pid, currentMonth);
+
+    const html = `
+    <div class="modal-header"><h3>💬 رسائل سريعة لـ ${escapeHtml(p.name)}</h3><button class="icon-btn" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+        
+        <button class="msg-template-btn" onclick="sendQuickMessage('${pid}', 'apology')">
+            <div class="icon">🙏</div>
+            <div class="text">
+                <h4>اعتذار عن يوم محجوز</h4>
+                <p>إلغاء حجز يوم تم الاتفاق عليه سابقاً.</p>
+            </div>
+        </button>
+
+        <button class="msg-template-btn" onclick="sendQuickMessage('${pid}', 'switch')">
+            <div class="icon">🔄</div>
+            <div class="text">
+                <h4>تبديل يوم العمل</h4>
+                <p>اقتراح تغيير يوم التصوير إلى يوم آخر.</p>
+            </div>
+        </button>
+
+        <button class="msg-template-btn" onclick="sendQuickMessage('${pid}', 'reminder')">
+            <div class="icon">⏰</div>
+            <div class="text">
+                <h4>تذكير بعدم التأخير</h4>
+                <p>تنبيه بأهمية الحضور في الموعد (اليوم أو غداً).</p>
+            </div>
+        </button>
+
+        <button class="msg-template-btn" onclick="sendQuickMessage('${pid}', 'pro')">
+            <div class="icon">🌟</div>
+            <div class="text">
+                <h4>رسالة تقدير احترافية</h4>
+                <p>شكر وتقدير من الإدارة على جودة العمل.</p>
+            </div>
+        </button>
+
+        <hr style="border:0; border-top:1px solid var(--line); margin: 20px 0;">
+
+        <button class="btn-wa" style="width: 100%; padding: 14px;" onclick="shareDailyReportWA('${pid}')">
+            📊 إرسال تقرير كشف الحساب وتسوية الرصيد (${fmtMoney(st.currentBalance)})
+        </button>
+    </div>
+    <div class="modal-footer"><button class="btn-secondary" onclick="closeModal()">إلغاء</button></div>
+    `;
+    openModal(html);
+}
+
+function sendQuickMessage(pid, type) {
+    const p = state.photographers.find(x=>x.id===pid); if(!p) return;
+    if(!p.phone) { showToast('لا يوجد رقم هاتف مسجل لهذا المصور', 'error'); return; }
+
+    let msg = '';
+    const studioName = currentStudioData.companyName || 'إدارة الاستوديو';
+
+    if (type === 'apology') {
+        msg = `مرحباً ${p.name}،\nنعتذر منك، لقد تم إلغاء حجز موعد التصوير المتفق عليه. سنقوم بالتواصل معك قريباً لترتيب مواعيد أخرى.\nشكراً لتفهمك.\n— ${studioName}`;
+    } else if (type === 'switch') {
+        msg = `مرحباً ${p.name}،\nبخصوص موعد التصوير القادم، هل يوجد إمكانية لتبديل الحجز ليوم آخر؟\nيرجى التواصل معنا للتنسيق في أقرب وقت.\n— ${studioName}`;
+    } else if (type === 'reminder') {
+        msg = `مرحباً ${p.name}،\nتذكير بموعد عملك القادم. نرجو الالتزام بالوقت وعدم التأخير لضمان جودة العمل وتجنب أي إحراج مع العملاء.\nشكراً لجهودك.\n— ${studioName}`;
+    } else if (type === 'pro') {
+        msg = `مرحباً ${p.name}،\nتود ${studioName} أن تشكرك على التزامك ومجهودك الرائع في العمل معنا. نحن نقدر احترافيتك ونتمنى الاستمرار دائماً على هذا المستوى المتميز.\nخالص التقدير 🌟`;
+    }
+
+    closeModal();
+    window.open(waLink(p.phone, msg), '_blank');
+}
+
+function showToast(msg, type){
+  const root = document.getElementById('toast-root');
+  const div = document.createElement('div');
+  div.className = 'toast ' + (type==='error' ? 'error' : '');
+  div.textContent = msg;
+  root.appendChild(div);
+  requestAnimationFrame(()=>div.classList.add('show'));
+  setTimeout(()=>{ div.classList.remove('show'); setTimeout(()=>div.remove(), 300); }, 2800);
+}
+function openModal(html){
+  const root = document.getElementById('modal-root');
+  root.innerHTML = `<div class="modal-overlay" onclick="if(event.target===this) closeModal()"><div class="modal">${html}</div></div>`;
+}
+function closeModal(){ document.getElementById('modal-root').innerHTML=''; }
+function confirmAction(message, fnName, arg){
+  const html = `<div class="modal-header"><h3>تأكيد</h3></div><div class="modal-body"><p>${escapeHtml(message)}</p></div><div class="modal-footer"><button class="btn-secondary" onclick="closeModal()">إلغاء</button><button class="btn-danger" onclick="${fnName}('${arg}'); closeModal();">تأكيد</button></div>`;
+  openModal(html);
+}
+function emptyState(title, subtitle){ return `<div class="empty-state"><div class="empty-icon">◎</div><h4>${escapeHtml(title)}</h4><p class="muted">${escapeHtml(subtitle)}</p></div>`; }
+
+function shiftMonth(delta){
+  const parts = currentMonth.split('-').map(Number);
+  const d = new Date(parts[0], parts[1]-1+delta, 1);
+  currentMonth = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  const input = document.getElementById('month-input');
+  if(input) input.value = currentMonth;
+  if(isPortalMode && state.photographers.length) {
+       const p = state.photographers.find(x => normalizePhone(x.phone) === normalizePhone(portalPhotographerPhone) || x.id === portalPhotographerPhone);
+       if(p) renderPortalContent(p);
+  } else renderCurrentView();
+}
+function onMonthChange(val){
+  if(!val) return;
+  currentMonth = val;
+  if(isPortalMode && state.photographers.length) {
+       const p = state.photographers.find(x => normalizePhone(x.phone) === normalizePhone(portalPhotographerPhone) || x.id === portalPhotographerPhone);
+       if(p) renderPortalContent(p);
+  } else renderCurrentView();
+}
+function switchView(view){
+  currentView = view;
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('active', s.id==='view-'+view));
+  renderCurrentView();
+}
+function renderCurrentView(){
+  if(currentView==='dashboard') renderDashboard();
+  else if(currentView==='resources') renderResources();
+  else if(currentView==='inventory') renderInventory();
+  else if(currentView==='events') renderEvents();
+  else if(currentView==='expenses') renderExpenses();
+}
+
+function showStatDetails(type) {
+    const stats = dashboardStats(currentMonth);
+    const monthEvs = eventsInMonth(currentMonth).slice().sort((a,b)=>a.date.localeCompare(b.date));
+    let title = '', body = '';
+
+    if (type === 'revenue') {
+        title = 'تفاصيل الإيرادات';
+        body = `<table class="data-table"><thead><tr><th>التاريخ</th><th>القاعة</th><th>المبلغ</th></tr></thead><tbody>`;
+        monthEvs.forEach(e => {
+            const amt = e.type === 'event' ? (Number(e.paidAmount)||0) : (Number(e.revenue)||0);
+            if (amt > 0) body += `<tr><td>${formatDateAr(e.date)}</td><td>${escapeHtml(hallName(e.hallId))}</td><td class="ok">${fmtMoney(amt)}</td></tr>`;
+        });
+        body += `</tbody><tfoot><tr><td colspan="2"><b>الإجمالي</b></td><td class="ok"><b>${fmtMoney(stats.revenue)}</b></td></tr></tfoot></table>`;
+    } else if (type === 'wages') {
+        title = 'تفاصيل أجور المصورين';
+        body = `<table class="data-table"><thead><tr><th>المصور</th><th>أيام العمل</th><th>الأجر المستحق</th></tr></thead><tbody>`;
+        state.photographers.forEach(p => {
+            const st = photographerStats(p.id, currentMonth);
+            if (st.wageMonth > 0) body += `<tr><td>${escapeHtml(p.name)}</td><td>${st.daysMonth}</td><td>${fmtMoney(st.wageMonth)}</td></tr>`;
+        });
+        body += `</tbody><tfoot><tr><td colspan="2"><b>الإجمالي</b></td><td><b>${fmtMoney(stats.wages)}</b></td></tr></tfoot></table>`;
+    } else if (type === 'equipment') {
+        title = 'تفاصيل إيجار المعدات';
+        body = `<table class="data-table"><thead><tr><th>التاريخ</th><th>المعدة</th><th>لصالح</th><th>المبلغ</th></tr></thead><tbody>`;
+        monthEvs.forEach(e => {
+            (e.equipment||[]).forEach(eq => {
+                body += `<tr><td>${formatDateAr(e.date)}</td><td>${escapeHtml(eq.name)}</td><td>${escapeHtml(photographerName(eq.photographerId))}</td><td>${fmtMoney(eq.price)}</td></tr>`;
+            });
+        });
+        body += `</tbody><tfoot><tr><td colspan="3"><b>الإجمالي</b></td><td><b>${fmtMoney(stats.equipment)}</b></td></tr></tfoot></table>`;
+    } else if (type === 'bonuses') {
+        title = 'تفاصيل المكافآت والبدلات';
+        body = `<table class="data-table"><thead><tr><th>التاريخ</th><th>البيان</th><th>لصالح</th><th>المبلغ</th></tr></thead><tbody>`;
+        monthEvs.forEach(e => {
+            (e.bonuses||[]).forEach(b => {
+                body += `<tr><td>${formatDateAr(e.date)}</td><td>${escapeHtml(b.desc)}</td><td>${escapeHtml(photographerName(b.photographerId))}</td><td style="color:#7E22CE">${fmtMoney(b.amount)}</td></tr>`;
+            });
+        });
+        body += `</tbody><tfoot><tr><td colspan="3"><b>الإجمالي</b></td><td style="color:#7E22CE"><b>${fmtMoney(stats.bonuses)}</b></td></tr></tfoot></table>`;
+    } else if (type === 'expenses') {
+        title = 'تفاصيل المصروفات العامة';
+        body = `<table class="data-table"><thead><tr><th>التاريخ</th><th>البيان</th><th>المبلغ</th></tr></thead><tbody>`;
+        const exps = expensesInMonth(currentMonth).slice().sort((a,b)=>a.date.localeCompare(b.date));
+        exps.forEach(ex => {
+            body += `<tr><td>${formatDateAr(ex.date)}</td><td>${escapeHtml(ex.description)}</td><td class="danger">${fmtMoney(ex.amount)}</td></tr>`;
+        });
+        monthEvs.forEach(e => {
+            if (e.type === 'daily' && e.expensesAmount > 0) {
+                body += `<tr><td>${formatDateAr(e.date)}</td><td>مصروف يومية: ${escapeHtml(e.expensesDesc||'—')}</td><td class="danger">${fmtMoney(e.expensesAmount)}</td></tr>`;
+            }
+        });
+        body += `</tbody><tfoot><tr><td colspan="2"><b>الإجمالي</b></td><td class="danger"><b>${fmtMoney(stats.expenses)}</b></td></tr></tfoot></table>`;
+    } else if (type === 'flashFund') {
+        title = 'تفاصيل صندوق الفلاشات';
+        body = `<table class="data-table"><thead><tr><th>التاريخ</th><th>العدد</th><th>السعر</th><th>الإجمالي</th></tr></thead><tbody>`;
+        monthEvs.forEach(e => {
+            if (e.flashCount > 0) {
+                const total = e.flashCount * (e.flashCost||0);
+                body += `<tr><td>${formatDateAr(e.date)}</td><td>${e.flashCount}</td><td>${fmtMoney(e.flashCost)}</td><td style="color:var(--gold-deep)">${fmtMoney(total)}</td></tr>`;
+            }
+        });
+        body += `</tbody><tfoot><tr><td colspan="3"><b>الإجمالي</b></td><td style="color:var(--gold-deep)"><b>${fmtMoney(stats.flashFund)}</b></td></tr></tfoot></table>`;
+    } else if (type === 'net') {
+        title = 'توضيح صافي الربح';
+        body = `
+            <div style="font-size: 15.5px; line-height: 1.8;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px;"><span>(+) إجمالي الإيرادات:</span><strong class="ok">${fmtMoney(stats.revenue)}</strong></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px; color:var(--danger)"><span>(-) إجمالي المصروفات والاستقطاعات:</span><strong>- ${fmtMoney(stats.wages + stats.equipment + stats.bonuses + stats.expenses + stats.flashFund)}</strong></div>
+                <hr style="border:0; border-top:1px dashed var(--line); margin: 12px 0;">
+                <div style="display:flex; justify-content:space-between; font-size: 20px;"><span>الصافي:</span><strong style="color:${stats.net>=0?'#4ADE80':'#F87171'}">${fmtMoney(stats.net)}</strong></div>
+            </div>
+        `;
+    }
+
+    if (body.indexOf('<tr><td>') === -1 && type !== 'net') body = '<div class="empty-state"><p class="muted">لا توجد بيانات مسجلة في هذا القسم للشهر الحالي.</p></div>';
+    openModal(`<div class="modal-header"><h3>${title}</h3><button class="icon-btn" onclick="closeModal()">✕</button></div><div class="modal-body">${body}</div><div class="modal-footer"><button class="btn-secondary" onclick="closeModal()">إغلاق</button></div>`);
+}
+
+function renderDashboard(){
+  const stats = dashboardStats(currentMonth);
+  const donut = buildDonutGradient(stats);
+  const container = document.getElementById('view-dashboard');
+  container.innerHTML = `
+    <div class="dash-actions">
+       <button class="btn-mega" onclick="openEventBookingModal()">🎉 حجز مناسبة جديدة</button>
+       <button class="btn-mega secondary" onclick="openDailyLogModal()">📅 تسجيل يومية عمل</button>
+    </div>
+
+    <div class="page-head">
+      <div><h2>نظرة عامة</h2><p class="muted">ملخص الأداء المالي لشهر ${formatMonthLabel(currentMonth)} - إضغط على أي صندوق للتفاصيل</p></div>
+    </div>
+    
+    <div class="stat-grid">
+      <div class="stat-card clickable" onclick="showStatDetails('revenue')"><span class="stat-label">إجمالي الإيراد</span><span class="stat-value ok">${fmtMoney(stats.revenue)}</span></div>
+      <div class="stat-card clickable" onclick="showStatDetails('wages')"><span class="stat-label">أجور المصورين</span><span class="stat-value">${fmtMoney(stats.wages)}</span></div>
+      <div class="stat-card clickable" onclick="showStatDetails('equipment')"><span class="stat-label">إيجار المعدات</span><span class="stat-value">${fmtMoney(stats.equipment)}</span></div>
+      <div class="stat-card clickable" onclick="showStatDetails('bonuses')"><span class="stat-label">مكافآت وبدلات</span><span class="stat-value" style="color:#7E22CE">${fmtMoney(stats.bonuses)}</span></div>
+      <div class="stat-card clickable" onclick="showStatDetails('expenses')"><span class="stat-label">مصروفات عامة</span><span class="stat-value danger">${fmtMoney(stats.expenses)}</span></div>
+      <div class="stat-card clickable" style="border-color:var(--gold)" onclick="showStatDetails('flashFund')"><span class="stat-label" style="color:var(--gold-deep)">صندوق الفلاشات 💾</span><span class="stat-value">${fmtMoney(stats.flashFund)}</span></div>
+      <div class="stat-card highlight clickable" onclick="showStatDetails('net')"><span class="stat-label">صافي الربح</span><span class="stat-value" style="color:${stats.net>=0?'#4ADE80':'#F87171'}">${fmtMoney(stats.net)}</span></div>
+    </div>
+    
+    <div class="dash-lower">
+      <div class="card breakdown-card">
+        <h3>توزيع المصروفات والاستقطاعات</h3>
+        <div class="donut" style="background:${donut}"><div class="donut-hole"><b>${fmtMoney(stats.wages+stats.equipment+stats.expenses+stats.flashFund+stats.bonuses)}</b><span>إجمالي المستقطع</span></div></div>
+        <ul class="legend">
+          <li><i style="background:var(--gold)"></i> أجور المصورين — ${fmtMoney(stats.wages)}</li>
+          <li><i style="background:var(--ink-soft)"></i> إيجار المعدات — ${fmtMoney(stats.equipment)}</li>
+          <li><i style="background:#7E22CE"></i> مكافآت وبدلات — ${fmtMoney(stats.bonuses)}</li>
+          <li><i style="background:var(--ok)"></i> صندوق الفلاشات — ${fmtMoney(stats.flashFund)}</li>
+          <li><i style="background:var(--danger)"></i> مصروفات عامة — ${fmtMoney(stats.expenses)}</li>
+        </ul>
+      </div>
+      <div class="card events-mini">
+        <h3>أعمال هذا الشهر</h3>
+        <p class="big-num" style="font-size:32px; font-weight:800; font-family:'Cairo'">${stats.eventsCount}</p>
+        <div style="width:100%; border-top:1px solid var(--line); padding-top:10px; margin-top:auto; text-align:right;">
+          ${Object.keys(stats.hallCounts).length ? Object.keys(stats.hallCounts).map(hId => `
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:13.5px; background:var(--paper); padding:6px 10px; border-radius:6px;">
+              <span class="muted">${escapeHtml(hallName(hId))}</span>
+              <b style="color:var(--gold-deep)">${stats.hallCounts[hId]} أعمال</b>
+            </div>
+          `).join('') : '<div style="text-align:center;"><span class="muted small">لا توجد أعمال مسجلة</span></div>'}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderResources(){
+  const container = document.getElementById('view-resources');
+  
+  let html = `
+    <!-- قسم المصورون -->
+    <div class="page-head">
+      <div><h2>فريق المصورين</h2><p class="muted">إدارة بيانات المصورين وتقارير العمل اليومية</p></div>
+      <button class="btn-primary" onclick="openPhotographerModal()">+ إضافة مصور</button>
+    </div>
+    <div class="photog-grid">
+      ${state.photographers.length ? state.photographers.map(p=>renderPhotographerFullCard(p)).join('') : emptyState('لا يوجد مصورون بعد','ابدأ بإضافة أول مصور في فريقك')}
+    </div>
+    
+    <hr style="border: 0; border-top: 2px dashed var(--line); margin: 40px 0;">
+
+    <!-- قسم القاعات -->
+    <div class="page-head">
+      <div><h2>القاعات وأماكن التصوير</h2><p class="muted">إدارة القاعات وإعداداتها</p></div>
+      <button class="btn-primary" onclick="openHallModal()">+ إضافة قاعة</button>
+    </div>
+    <div class="halls-grid">
+        ${state.halls.length ? state.halls.map(h=>renderHallCard(h)).join('') : emptyState('لا يوجد قاعات بعد','أضف أول قاعة للعمل')}
+    </div>
+  `;
+  container.innerHTML = html;
+}
+
+function renderPhotographerFullCard(p){
+  const st = photographerStats(p.id, currentMonth);
+  return `
+    <div class="card photog-card">
+      <div class="photog-top">
+        <div class="avatar">${initials(p.name)}</div>
+        <div><h4>${escapeHtml(p.name)}</h4><span class="muted small">${escapeHtml(p.phone||'—')} · أجر اليوم ${fmtMoney(p.wage)}</span></div>
+      </div>
+      <div class="photog-stats">
+        <div title="أيام العمل هذا الشهر"><span>${st.daysMonth}</span><label>أيام</label></div>
+        <div title="أجر هذا الشهر"><span>${fmtMoney(st.wageMonth)}</span><label>الأجر</label></div>
+        <div title="إضافي هذا الشهر"><span>${fmtMoney(st.bonusMonth+st.equipmentMonth)}</span><label>إضافي</label></div>
+        <div class="due" title="الرصيد الكلي المستحق حتى الآن"><span>${fmtMoney(st.currentBalance)}</span><label>الرصيد</label></div>
+      </div>
+      
+      <div class="photog-actions" style="margin-top:12px;">
+        <button class="btn-secondary sm" onclick="openInvoiceModal('${p.id}')">🧾 كشف حساب</button>
+        <button class="btn-secondary sm" onclick="openPhotographerModal('${p.id}')">✎ تعديل</button>
+        <button class="btn-danger sm" onclick="confirmAction('حذف المصور؟','deletePhotographer','${p.id}')">🗑</button>
+      </div>
+      
+      <div style="border-top:1px solid var(--line); margin-top:8px; padding-top:12px; display:flex; flex-direction:column; gap:8px;">
+          <div class="photog-actions">
+            <button class="btn-wa sm" onclick="openMessageTemplatesModal('${p.id}')" title="رسائل واتساب السريعة للعمل">💬 رسائل سريعة</button>
+            <button class="btn-link sm" onclick="shareAppointmentsWA('${p.id}')" title="إرسال المواعيد">📅 المواعيد</button>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn-secondary sm" onclick="copyPortalLink('${p.id}')" style="flex:2">🔗 رابط البوابة الخاصة به</button>
+            <button class="btn-secondary sm" onclick="confirmAction('تأكيد إعادة ضبط جهاز المصور؟', 'resetPhotographerDevice', '${p.id}')" title="إعادة ضبط الجهاز" style="flex:1">🔓</button>
+          </div>
+      </div>
+    </div>`;
+}
+
+function openPhotographerModal(id){
+  const p = id ? state.photographers.find(x=>x.id===id) : null;
+  const html = `
+    <div class="modal-header"><h3>${p?'تعديل بيانات المصور':'إضافة مصور جديد'}</h3><button class="icon-btn" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="pf-id" value="${p?p.id:''}">
+      <div class="form-field"><label>اسم المصور</label><input type="text" id="pf-name" value="${p?escapeHtml(p.name):''}"></div>
+      <div class="form-field"><label>رقم الهاتف</label><input type="tel" id="pf-phone" value="${p?escapeHtml(p.phone):''}"></div>
+      <div class="form-field"><label>أجر يوم العمل</label><input type="number" min="0" id="pf-wage" value="${p?p.wage:''}"></div>
+    </div>
+    <div class="modal-footer"><button class="btn-secondary" onclick="closeModal()">إلغاء</button><button class="btn-primary" onclick="savePhotographer()">حفظ</button></div>`;
+  openModal(html);
+}
+function savePhotographer(){
+  const id = document.getElementById('pf-id').value || uid(), name = document.getElementById('pf-name').value.trim(), phone = document.getElementById('pf-phone').value.trim(), wage = parseFloat(document.getElementById('pf-wage').value) || 0;
+  if(!name){ showToast('أدخل اسم المصور','error'); return; }
+  const idx = state.photographers.findIndex(x=>x.id===id);
+  const obj = {id, name, phone, wage, deviceToken: (idx>=0 ? state.photographers[idx].deviceToken : null)};
+  if(idx>=0) state.photographers[idx]=obj; else state.photographers.push(obj);
+  saveState(); closeModal(); renderCurrentView(); showToast('تم الحفظ ✅');
+}
+function deletePhotographer(id){ state.photographers = state.photographers.filter(p=>p.id!==id); saveState(); renderCurrentView(); showToast('تم الحذف'); }
+
+function openInvoiceModal(pid){
+  const p = state.photographers.find(x=>x.id===pid); if(!p) return;
+  const st = photographerStats(pid, currentMonth);
+  let bodyRows = '';
+  st.eventsMonth.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+    bodyRows += `<tr><td>${formatDateAr(e.date)}</td><td>${escapeHtml(hallName(e.hallId))}</td><td>أجر عمل</td><td>${fmtMoney(p.wage)}</td></tr>`;
+    (e.equipment||[]).filter(eq=>eq.photographerId===pid).forEach(eq=>{ bodyRows += `<tr><td>${formatDateAr(e.date)}</td><td>${escapeHtml(hallName(e.hallId))}</td><td>معدة: ${escapeHtml(eq.name)}</td><td>${fmtMoney(eq.price)}</td></tr>`; });
+    (e.bonuses||[]).filter(b=>b.photographerId===pid).forEach(b=>{ bodyRows += `<tr><td>${formatDateAr(e.date)}</td><td>${escapeHtml(hallName(e.hallId))}</td><td>مكافأة: ${escapeHtml(b.desc)}</td><td style="color:var(--ok)">${fmtMoney(b.amount)}</td></tr>`; });
+  });
+  payoutsInMonth(currentMonth).filter(x=>x.photographerId===pid).forEach(py=>{ bodyRows += `<tr><td>${formatDateAr(py.date)}</td><td colspan="2" style="color:var(--danger)">دفعة مسددة</td><td style="color:var(--danger)">-${fmtMoney(py.amount)}</td></tr>`; });
+
+  const html = `
+    <div class="modal-header"><h3>كشف حساب ${escapeHtml(p.name)}</h3><button class="icon-btn" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <table class="data-table"><thead><tr><th>التاريخ</th><th>القاعة</th><th>البيان</th><th>المبلغ</th></tr></thead><tbody>${bodyRows || '<tr><td colspan="4" class="muted" style="text-align:center;padding:20px">لا توجد حركات هذا الشهر</td></tr>'}</tbody></table>
+      <div class="invoice-summary">
+        <div><span>إجمالي أيام العمل (طوال الوقت)</span><b>${st.totalDaysAll} أيام</b></div>
+        <div><span>الرصيد الكلي المستحق للمصور</span><b style="color:var(--danger)">${fmtMoney(st.currentBalance)}</b></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn-secondary" onclick="closeModal()">إغلاق</button></div>`;
+  openModal(html);
+}
+
+function renderHallCard(h){
+  const count = eventsInMonth(currentMonth).filter(e=>e.hallId===h.id).length;
+  return `
+    <div class="card hall-card">
+      <div class="hall-icon">🏛️</div><h4>${escapeHtml(h.name)}</h4>
+      <p class="muted small" style="margin-bottom: 12px;">${count} عمل هذا الشهر</p>
+      <div class="photog-actions" style="width:100%;">
+        <button class="btn-secondary sm" onclick="openHallModal('${h.id}')">✎ تعديل</button>
+        <button class="btn-danger sm" onclick="confirmAction('حذف؟','deleteHall','${h.id}')">🗑</button>
+      </div>
+    </div>`;
+}
+
+function openHallModal(id){
+  const h = id ? state.halls.find(x=>x.id===id) : null;
+  openModal(`<div class="modal-header"><h3>${h?'تعديل':'إضافة'} قاعة</h3><button class="icon-btn" onclick="closeModal()">✕</button></div><div class="modal-body"><input type="hidden" id="hf-id" value="${h?h.id:''}"><div class="form-field"><label>الاسم</label><input type="text" id="hf-name" value="${h?escapeHtml(h.name):''}"></div><div class="form-field"><label>إيراد افتراضي (اختياري)</label><input type="number" id="hf-revenue" value="${h?h.defaultRevenue||'':''}"></div></div><div class="modal-footer"><button class="btn-secondary" onclick="closeModal()">إلغاء</button><button class="btn-primary" onclick="saveHall()">حفظ</button></div>`);
+}
+function saveHall(){
+  const id = document.getElementById('hf-id').value || uid(), name = document.getElementById('hf-name').value.trim(), defaultRevenue = parseFloat(document.getElementById('hf-revenue').value) || 0;
+  if(!name) return;
+  const idx = state.halls.findIndex(x=>x.id===id);
+  if(idx>=0) state.halls[idx]={id,name,defaultRevenue}; else state.halls.push({id,name,defaultRevenue});
+  saveState(); closeModal(); renderCurrentView();
+}
+function deleteHall(id){ state.halls = state.halls.filter(h=>h.id!==id); saveState(); renderCurrentView(); }
+
+
+// 🟢 قسم العهدة والمعدات (Inventory) 
+function renderInventory() {
+    const container = document.getElementById('view-inventory');
+    
+    let html = `
+        <div class="page-head">
+            <div><h2>العهدة والمعدات</h2><p class="muted">إدارة الكاميرات، العدسات ومعدات الاستوديو وتتبع من يستخدمها حالياً</p></div>
+            <button class="btn-primary" onclick="openEquipmentModal()">+ إضافة معدة</button>
+        </div>
+        <div class="halls-grid">
+            ${state.inventory.length ? state.inventory.map(eq => renderEquipmentCard(eq)).join('') : emptyState('لا توجد معدات','أضف معدات الاستوديو لمتابعتها')}
+        </div>
+        
+        <hr style="border: 0; border-top: 2px dashed var(--line); margin: 40px 0;">
+        <div class="page-head">
+            <div><h2>سجل حركات العهدة</h2></div>
+        </div>
+        <div class="card" style="padding: 0; overflow:hidden;">
+            <table class="data-table">
+                <thead><tr><th>المعدة</th><th>المصور</th><th>تاريخ الاستلام</th><th>تاريخ الإرجاع</th><th>الحالة</th></tr></thead>
+                <tbody>
+                    ${state.borrows.length ? state.borrows.slice().reverse().map(b => {
+                        const eq = state.inventory.find(x => x.id === b.eqId);
+                        const ph = state.photographers.find(x => x.id === b.phId);
+                        let stBadge = b.status === 'active' ? '<span class="badge borrowed">في العهدة</span>' : (b.status === 'returned' ? '<span class="badge available">تم الإرجاع</span>' : '<span class="badge maintenance">مسترجعة بتلف</span>');
+                        return `<tr>
+                            <td>${escapeHtml(eq ? eq.name : 'معدة محذوفة')}</td>
+                            <td>${escapeHtml(ph ? ph.name : 'مصور محذوف')}</td>
+                            <td>${formatDateAr(b.dateOut)}</td>
+                            <td>${b.dateIn ? formatDateAr(b.dateIn) : '—'}</td>
+                            <td>${stBadge}</td>
+                        </tr>`;
+                    }).join('') : '<tr><td colspan="5" class="muted" style="text-align:center; padding: 30px;">لا يوجد سجل حركات حتى الآن</td></tr>'}
+                </tbody>
+            </table>
+        </div>
+    `;
+    container.innerHTML = html;
+}
+
+function renderEquipmentCard(eq) {
+    let statusHtml = '';
+    let actionHtml = '';
+    if (eq.status === 'available') {
+        statusHtml = '<span class="badge available" style="margin-bottom:10px;">متوفرة بالاستوديو</span>';
+        actionHtml = `<button class="btn-primary sm" onclick="openAssignModal('${eq.id}')">تسليم لمصور</button>`;
+    } else if (eq.status === 'borrowed') {
+        const ph = state.photographers.find(x => x.id === eq.currentBorrowerId);
+        statusHtml = `<span class="badge borrowed" style="margin-bottom:10px;">في عهدة: ${ph ? escapeHtml(ph.name) : '—'}</span>`;
+        actionHtml = `<button class="btn-wa sm" style="background:#FFF3E0; color:#E65100;" onclick="openReturnModal('${eq.id}')">استلام المعدة</button>`;
+    }
+
+    return `
+        <div class="card hall-card">
+            <div class="hall-icon">📷</div>
+            <h4>${escapeHtml(eq.name)}</h4>
+            <span class="muted small" style="display:block; margin-bottom:8px;">${escapeHtml(eq.sn || 'بدون سيريال')}</span>
+            ${statusHtml}
+            <div class="photog-actions" style="margin-top: 10px; width: 100%;">
+                ${actionHtml}
+                <button class="btn-secondary sm" onclick="openEquipmentModal('${eq.id}')">✎</button>
+                <button class="btn-danger sm" onclick="confirmAction('حذف المعدة من السجل نهائياً؟', 'deleteEquipment', '${eq.id}')">🗑</button>
+            </div>
+        </div>
+    `;
+}
+
+function openEquipmentModal(id) {
+    const eq = id ? state.inventory.find(x=>x.id===id) : null;
+    openModal(`
+        <div class="modal-header"><h3>${eq?'تعديل':'إضافة'} معدة (كاميرا، عدسة، فلاش...)</h3><button class="icon-btn" onclick="closeModal()">✕</button></div>
+        <div class="modal-body">
+            <input type="hidden" id="eq-id" value="${eq?eq.id:''}">
+            <div class="form-field"><label>اسم المعدة / الموديل</label><input type="text" id="eq-name" value="${eq?escapeHtml(eq.name):''}"></div>
+            <div class="form-field"><label>الرقم التسلسلي (اختياري)</label><input type="text" id="eq-sn" value="${eq?escapeHtml(eq.sn||''):''}"></div>
+        </div>
+        <div class="modal-footer"><button class="btn-secondary" onclick="closeModal()">إلغاء</button><button class="btn-primary" onclick="saveEquipment()">حفظ</button></div>
+    `);
+}
+
+function saveEquipment() {
+    const id = document.getElementById('eq-id').value || uid();
+    const name = document.getElementById('eq-name').value.trim();
+    const sn = document.getElementById('eq-sn').value.trim();
+    if(!name) { showToast('يرجى كتابة اسم المعدة', 'error'); return; }
+    
+    const idx = state.inventory.findIndex(x=>x.id===id);
+    if(idx>=0) {
+        state.inventory[idx].name = name;
+        state.inventory[idx].sn = sn;
+    } else {
+        state.inventory.push({ id, name, sn, status: 'available', currentBorrowerId: null });
+    }
+    saveState(); closeModal(); renderCurrentView();
+    showToast('تم حفظ المعدة بنجاح');
+}
+
+function deleteEquipment(id) {
+    state.inventory = state.inventory.filter(x => x.id !== id);
+    saveState(); renderCurrentView();
+}
+
+function openAssignModal(eqId) {
+    const opts = state.photographers.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+    openModal(`
+        <div class="modal-header"><h3>تسليم معدة لـ مصور</h3><button class="icon-btn" onclick="closeModal()">✕</button></div>
+        <div class="modal-body">
+            <input type="hidden" id="assign-eq-id" value="${eqId}">
+            <div class="form-field"><label>تاريخ الاستلام</label><input type="date" id="assign-date" value="${todayStr()}"></div>
+            <div class="form-field"><label>المصور المستلم</label><select id="assign-ph"><option value="">اختر المصور</option>${opts}</select></div>
+        </div>
+        <div class="modal-footer"><button class="btn-secondary" onclick="closeModal()">إلغاء</button><button class="btn-primary" onclick="saveAssign()">تأكيد التسليم</button></div>
+    `);
+}
+
+function saveAssign() {
+    const eqId = document.getElementById('assign-eq-id').value;
+    const phId = document.getElementById('assign-ph').value;
+    const date = document.getElementById('assign-date').value;
+    if(!phId || !date) { showToast('يرجى استكمال البيانات', 'error'); return; }
+    
+    const eq = state.inventory.find(x => x.id === eqId);
+    if(eq) {
+        eq.status = 'borrowed';
+        eq.currentBorrowerId = phId;
+        state.borrows.push({ id: uid(), eqId, phId, dateOut: date, dateIn: null, status: 'active' });
+        saveState(); closeModal(); renderCurrentView(); showToast('تم تسجيل التسليم بنجاح');
+    }
+}
+
+function openReturnModal(eqId) {
+    const eq = state.inventory.find(x => x.id === eqId);
+    const borrow = state.borrows.find(x => x.eqId === eqId && x.status === 'active');
+    if(!eq || !borrow) return;
+    
+    openModal(`
+        <div class="modal-header"><h3>استرجاع المعدة للاستوديو</h3><button class="icon-btn" onclick="closeModal()">✕</button></div>
+        <div class="modal-body">
+            <input type="hidden" id="return-eq-id" value="${eqId}">
+            <input type="hidden" id="return-borrow-id" value="${borrow.id}">
+            <div class="form-field"><label>تاريخ الاسترجاع</label><input type="date" id="return-date" value="${todayStr()}"></div>
+            <div class="form-field"><label>حالة المعدة عند الاستلام</label>
+                <select id="return-status">
+                    <option value="returned">سليمة (كما استلمت)</option>
+                    <option value="damaged">بها تلفيات / مشاكل (سيتم إضافتها للسجل)</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer"><button class="btn-secondary" onclick="closeModal()">إلغاء</button><button class="btn-primary" onclick="saveReturn()">تأكيد الاستلام</button></div>
+    `);
+}
+
+function saveReturn() {
+    const eqId = document.getElementById('return-eq-id').value;
+    const borrowId = document.getElementById('return-borrow-id').value;
+    const date = document.getElementById('return-date').value;
+    const status = document.getElementById('return-status').value;
+    
+    const eq = state.inventory.find(x => x.id === eqId);
+    const borrow = state.borrows.find(x => x.id === borrowId);
+    
+    if(eq && borrow) {
+        eq.status = 'available';
+        eq.currentBorrowerId = null;
+        borrow.dateIn = date;
+        borrow.status = status;
+        saveState(); closeModal(); renderCurrentView(); 
+        showToast(status === 'damaged' ? 'تم الاستلام مع تسجيل التلفيات' : 'تم الاسترجاع بنجاح');
+    }
+}
+
+
+function renderEvents(){
+  const container = document.getElementById('view-events');
+  const evs = eventsInMonth(currentMonth).slice().sort((a,b)=>b.date.localeCompare(a.date));
+  container.innerHTML = `
+    <div class="page-head"><div><h2>أرشيف الأعمال</h2></div></div>
+    <div class="events-list">${evs.length ? evs.map(e=>renderEventCard(e)).join('') : emptyState('لا توجد أعمال هذا الشهر','')}</div>`;
+}
+
+function renderEventCard(e){
+  const isEvent = e.type === 'event';
+  const revAmount = isEvent ? (Number(e.paidAmount)||0) : (Number(e.revenue)||0);
+  return `
+    <div class="event-card">
+      <div class="event-top">
+        <div>
+          <div style="display:flex; gap:4px; margin-bottom:4px;"><span class="badge ${e.status==='completed'?'ok':'gold'}">${e.status==='completed'?'تم':'قادم'}</span><span class="badge blue">${isEvent?'مناسبة':'يومية'}</span></div>
+          <h4>${formatDateAr(e.date)} ${e.time?' · '+e.time:''}</h4>
+          <span class="muted small">🏛️ ${escapeHtml(hallName(e.hallId))}</span>
+        </div>
+        <div class="event-revenue"><span>${fmtMoney(revAmount)}</span><label>${isEvent?'المدفوع':'الإيراد'}</label></div>
+      </div>
+      <div class="photog-actions" style="border-top:1px solid var(--line); padding-top:8px; margin-top:4px;">
+        <button class="btn-secondary sm" onclick="${isEvent ? `openEventBookingModal('${e.id}')` : `openDailyLogModal('${e.id}')`}">✎ تعديل</button>
+        <button class="btn-danger sm" onclick="confirmAction('حذف؟','deleteEvent','${e.id}')">🗑</button>
+      </div>
+    </div>`;
+}
+
+function updatePhChecklist(currentEvId) {
+  const dateInput = document.getElementById('ev-date'); if(!dateInput) return;
+  const selected = Array.from(document.querySelectorAll('.ph-check:checked')).map(el=>el.value);
+  const container = document.getElementById('ph-checklist');
+  if(container) container.innerHTML = `<div class="check-grid">${state.photographers.map(p=>`<label class="check-item"><input type="checkbox" class="ph-check" value="${p.id}" ${selected.includes(p.id)?'checked':''}><span>${escapeHtml(p.name)}</span></label>`).join('')}</div>`;
+}
+function addEquipmentRow(data){
+  data = data || {photographerId:'', name:'', price:''};
+  const container = document.getElementById('equipment-rows'); if(!container) return;
+  const rowId = 'eqrow_' + uid(), div = document.createElement('div'); div.className = 'equip-row'; div.id = rowId;
+  const opts = state.photographers.map(p=>`<option value="${p.id}" ${p.id===data.photographerId?'selected':''}>${escapeHtml(p.name)}</option>`).join('');
+  div.innerHTML = `<select class="eq-owner"><option value="">صاحب المعدة</option>${opts}</select><input type="text" class="eq-name" placeholder="المعدة" value="${escapeHtml(data.name)}"><input type="number" class="eq-price" placeholder="السعر" min="0" value="${data.price}"><button type="button" class="icon-btn danger" onclick="document.getElementById('${rowId}').remove()">✕</button>`;
+  container.appendChild(div);
+}
+function addBonusRow(data){
+  data = data || {photographerId:'', desc:'', amount:''};
+  const container = document.getElementById('bonus-rows'); if(!container) return;
+  const rowId = 'bnrow_' + uid(), div = document.createElement('div'); div.className = 'equip-row'; div.id = rowId;
+  const opts = state.photographers.map(p=>`<option value="${p.id}" ${p.id===data.photographerId?'selected':''}>${escapeHtml(p.name)}</option>`).join('');
+  div.innerHTML = `<select class="bn-owner"><option value="">المصور</option>${opts}</select><input type="text" class="bn-desc" placeholder="السبب" value="${escapeHtml(data.desc)}"><input type="number" class="bn-amount" placeholder="المبلغ" min="0" value="${data.amount}"><button type="button" class="icon-btn danger" onclick="document.getElementById('${rowId}').remove()">✕</button>`;
+  container.appendChild(div);
+}
+function onHallSelect(hallId, type) {
+  const hall = state.halls.find(h => h.id === hallId);
+  if (hall && hall.defaultRevenue) {
+    if (type === 'daily') { const el = document.getElementById('ev-revenue'); if(el && !el.value) el.value = hall.defaultRevenue; }
+    else if (type === 'event') { const el = document.getElementById('ev-total'); if(el && !el.value) { el.value = hall.defaultRevenue; document.getElementById('ev-rem').value = el.value; } }
+  }
+}
+
+function openDailyLogModal(id){
+  const ev = id ? state.events.find(e=>e.id===id) : null;
+  const hOpts = state.halls.map(h=>`<option value="${h.id}" ${ev&&ev.hallId===h.id?'selected':''}>${escapeHtml(h.name)}</option>`).join('');
+  const html = `
+    <div class="modal-header"><h3>${ev?'تعديل':'تسجيل'} يومية عمل</h3><button class="icon-btn" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="ev-id" value="${ev?ev.id:''}"><input type="hidden" id="ev-type" value="daily">
+      <div class="form-grid">
+        <div class="form-field"><label>التاريخ</label><input type="date" id="ev-date" value="${ev?ev.date:todayStr()}" onchange="updatePhChecklist()"></div>
+        <div class="form-field"><label>القاعة</label><select id="ev-hall" onchange="onHallSelect(this.value, 'daily')"><option value="">اختر القاعة</option>${hOpts}</select></div>
+        <div class="form-field"><label>الإيراد</label><input type="number" min="0" id="ev-revenue" value="${ev?ev.revenue:''}"></div>
+        <div class="form-field"><label>الحالة</label><select id="ev-status"><option value="completed" ${ev&&ev.status==='completed'?'selected':''}>تم التصوير</option><option value="upcoming" ${ev&&ev.status==='upcoming'?'selected':''}>قادم</option></select></div>
+        <div class="form-field full"><label style="color:var(--danger)">مصروفات خاصة بهاللية</label><div style="display:flex;gap:10px;"><input type="text" id="ev-exp-desc" placeholder="البيان" value="${ev?escapeHtml(ev.expensesDesc||''):''}" style="flex:2"><input type="number" id="ev-exp-amount" placeholder="المبلغ" value="${ev?ev.expensesAmount||'':''}" style="flex:1"></div></div>
+        <div class="form-field full"><label style="color:var(--gold-deep)">فلاشات</label><div style="display:flex;gap:10px;"><input type="number" id="ev-flash-count" placeholder="العدد" value="${ev?ev.flashCount||'':''}" style="flex:1"><input type="number" id="ev-flash-cost" placeholder="سعر الفلاشة" value="${ev?ev.flashCost||150:150}" style="flex:1"></div></div>
+      </div>
+      <h4 class="section-title">المصورون</h4><div id="ph-checklist"><div class="check-grid">${state.photographers.map(p=>`<label class="check-item"><input type="checkbox" class="ph-check" value="${p.id}" ${ev&&ev.photographerIds.includes(p.id)?'checked':''}><span>${escapeHtml(p.name)}</span></label>`).join('')}</div></div>
+      <h4 class="section-title">معدات مؤجرة</h4><div id="equipment-rows"></div><button type="button" class="btn-secondary sm" onclick="addEquipmentRow()">+ معدة مؤجرة</button>
+      <h4 class="section-title">مكافآت وبدلات</h4><div id="bonus-rows"></div><button type="button" class="btn-secondary sm" onclick="addBonusRow()">+ مكافأة / بدل</button>
+    </div>
+    <div class="modal-footer"><button class="btn-secondary" onclick="closeModal()">إلغاء</button><button class="btn-primary" onclick="saveEvent()">حفظ</button></div>`;
+  openModal(html);
+  if(ev && ev.equipment) ev.equipment.forEach(it=>addEquipmentRow(it));
+  if(ev && ev.bonuses) ev.bonuses.forEach(b=>addBonusRow(b));
+}
+
+function openEventBookingModal(id){
+  const ev = id ? state.events.find(e=>e.id===id) : null;
+  const hOpts = state.halls.map(h=>`<option value="${h.id}" ${ev&&ev.hallId===h.id?'selected':''}>${escapeHtml(h.name)}</option>`).join('');
+  const html = `
+    <div class="modal-header"><h3>${ev?'تعديل':'حجز'} مناسبة</h3><button class="icon-btn" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="ev-id" value="${ev?ev.id:''}"><input type="hidden" id="ev-type" value="event">
+      <div class="form-grid">
+        <div class="form-field"><label>التاريخ</label><input type="date" id="ev-date" value="${ev?ev.date:todayStr()}" onchange="updatePhChecklist()"></div>
+        <div class="form-field"><label>الوقت</label><input type="time" id="ev-time" value="${ev&&ev.time?ev.time:''}"></div>
+        <div class="form-field"><label>القاعة</label><select id="ev-hall" onchange="onHallSelect(this.value, 'event')"><option value="">اختر القاعة</option>${hOpts}</select></div>
+        <div class="form-field"><label>الحالة</label><select id="ev-status"><option value="upcoming" ${ev&&ev.status==='upcoming'?'selected':''}>قادم</option><option value="completed" ${ev&&ev.status==='completed'?'selected':''}>تم</option></select></div>
+        <div class="form-field"><label>التكلفة</label><input type="number" id="ev-total" value="${ev?ev.totalAmount:''}" oninput="document.getElementById('ev-rem').value = this.value - (document.getElementById('ev-paid').value||0)"></div>
+        <div class="form-field"><label>المدفوع</label><input type="number" id="ev-paid" value="${ev?ev.paidAmount:''}" oninput="document.getElementById('ev-rem').value = (document.getElementById('ev-total').value||0) - this.value"></div>
+        <div class="form-field"><label>الباقي</label><input type="number" id="ev-rem" value="${ev?ev.remainingAmount||0:0}" readonly></div>
+        <div class="form-field full"><label style="color:var(--gold-deep)">فلاشات</label><div style="display:flex;gap:10px;"><input type="number" id="ev-flash-count" placeholder="العدد" value="${ev?ev.flashCount||'':''}" style="flex:1"><input type="number" id="ev-flash-cost" placeholder="سعر الفلاشة" value="${ev?ev.flashCost||150:150}" style="flex:1"></div></div>
+      </div>
+      <h4 class="section-title">المصورون</h4><div id="ph-checklist"><div class="check-grid">${state.photographers.map(p=>`<label class="check-item"><input type="checkbox" class="ph-check" value="${p.id}" ${ev&&ev.photographerIds.includes(p.id)?'checked':''}><span>${escapeHtml(p.name)}</span></label>`).join('')}</div></div>
+      <h4 class="section-title">معدات مؤجرة</h4><div id="equipment-rows"></div><button type="button" class="btn-secondary sm" onclick="addEquipmentRow()">+ معدة مؤجرة</button>
+      <h4 class="section-title">مكافآت وبدلات</h4><div id="bonus-rows"></div><button type="button" class="btn-secondary sm" onclick="addBonusRow()">+ مكافأة / بدل</button>
+    </div>
+    <div class="modal-footer"><button class="btn-secondary" onclick="closeModal()">إلغاء</button><button class="btn-primary" onclick="saveEvent()">حفظ</button></div>`;
+  openModal(html);
+  if(ev && ev.equipment) ev.equipment.forEach(it=>addEquipmentRow(it));
+  if(ev && ev.bonuses) ev.bonuses.forEach(b=>addBonusRow(b));
+}
+
+function saveEvent(){
+  const id = document.getElementById('ev-id').value || uid(), type = document.getElementById('ev-type').value, date = document.getElementById('ev-date').value, hallId = document.getElementById('ev-hall').value;
+  if(!date || !hallId) return;
+  let obj = { id, type, date, hallId, status: document.getElementById('ev-status').value, flashCount: parseInt(document.getElementById('ev-flash-count').value)||0, flashCost: parseFloat(document.getElementById('ev-flash-cost').value)||0 };
+  
+  if(type === 'daily') {
+      obj.revenue = parseFloat(document.getElementById('ev-revenue').value) || 0;
+      obj.expensesAmount = parseFloat(document.getElementById('ev-exp-amount').value) || 0;
+      obj.expensesDesc = document.getElementById('ev-exp-desc').value.trim();
+  } else {
+      obj.time = document.getElementById('ev-time').value; 
+      obj.totalAmount = parseFloat(document.getElementById('ev-total').value) || 0; obj.paidAmount = parseFloat(document.getElementById('ev-paid').value) || 0; obj.remainingAmount = parseFloat(document.getElementById('ev-rem').value) || 0;
+  }
+  
+  obj.photographerIds = Array.from(document.querySelectorAll('.ph-check:checked')).map(el=>el.value);
+  obj.equipment = []; document.querySelectorAll('#equipment-rows .equip-row').forEach(r=>{ const ow=r.querySelector('.eq-owner').value, nm=r.querySelector('.eq-name').value, pr=parseFloat(r.querySelector('.eq-price').value)||0; if(ow&&nm) obj.equipment.push({photographerId:ow, name:nm, price:pr}); });
+  obj.bonuses = []; document.querySelectorAll('#bonus-rows .equip-row').forEach(r=>{ const ow=r.querySelector('.bn-owner').value, ds=r.querySelector('.bn-desc').value, am=parseFloat(r.querySelector('.bn-amount').value)||0; if(ow&&am) obj.bonuses.push({photographerId:ow, desc:ds, amount:am}); });
+
+  const idx = state.events.findIndex(e=>e.id===id); if(idx>=0) state.events[idx]=obj; else state.events.push(obj);
+  saveState(); closeModal(); renderCurrentView();
+}
+function deleteEvent(id){ state.events = state.events.filter(e=>e.id!==id); saveState(); renderCurrentView(); }
+
+function renderExpenses(){
+  const container = document.getElementById('view-expenses');
+  const exps = expensesInMonth(currentMonth).slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const pyts = payoutsInMonth(currentMonth).slice().sort((a,b)=>b.date.localeCompare(a.date));
+
+  container.innerHTML = `
+    <div class="page-head"><div><h2>المصروفات وتصفية الحسابات</h2></div></div>
+    <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); align-items:start;">
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; margin-bottom:16px;"><h3>المصروفات العامة</h3><button class="btn-primary sm" onclick="openExpenseModal()">+ إضافة</button></div>
+          <table class="data-table"><tbody>${exps.length ? exps.map(x=>`<tr><td>${formatDateAr(x.date)}</td><td>${escapeHtml(x.description||'—')}</td><td>${fmtMoney(x.amount)}</td><td><button class="btn-danger sm" onclick="confirmAction('حذف؟','deleteExpense','${x.id}')">🗑</button></td></tr>`).join('') : '<tr><td colspan="4" class="muted">لا توجد مصروفات</td></tr>'}</tbody></table>
+        </div>
+        <div class="card" style="border-color:var(--gold)">
+          <div style="display:flex; justify-content:space-between; margin-bottom:16px;"><h3 style="color:var(--gold-deep)">تسديد الدفعات</h3><button class="btn-primary sm" onclick="openPayoutModal()">+ تسديد</button></div>
+          <table class="data-table"><tbody>${pyts.length ? pyts.map(x=>`<tr><td>${formatDateAr(x.date)}</td><td>${escapeHtml(photographerName(x.photographerId))}</td><td class="danger">${fmtMoney(x.amount)}</td><td><button class="btn-danger sm" onclick="confirmAction('حذف؟','deletePayout','${x.id}')">🗑</button></td></tr>`).join('') : '<tr><td colspan="4" class="muted">لا توجد تصفيات</td></tr>'}</tbody></table>
+        </div>
+    </div>`;
+}
+
+function openExpenseModal(){
+  openModal(`<div class="modal-header"><h3>إضافة مصروف</h3><button class="icon-btn" onclick="closeModal()">✕</button></div><div class="modal-body"><div class="form-field"><label>التاريخ</label><input type="date" id="exf-date" value="${todayStr()}"></div><div class="form-field"><label>البيان</label><input type="text" id="exf-desc"></div><div class="form-field"><label>المبلغ</label><input type="number" id="exf-amount"></div></div><div class="modal-footer"><button class="btn-secondary" onclick="closeModal()">إلغاء</button><button class="btn-primary" onclick="saveExpense()">حفظ</button></div>`);
+}
+function saveExpense(){
+  const date = document.getElementById('exf-date').value, desc = document.getElementById('exf-desc').value.trim(), amt = parseFloat(document.getElementById('exf-amount').value)||0;
+  if(date && amt>0) { state.expenses.push({id:uid(), date, description:desc, amount:amt}); saveState(); closeModal(); renderCurrentView(); }
+}
+function deleteExpense(id){ state.expenses = state.expenses.filter(x=>x.id!==id); saveState(); renderCurrentView(); }
+
+function openPayoutModal(){
+  const opts = state.photographers.map(p=>`<option value="${p.id}">${escapeHtml(p.name)} (رصيده: ${fmtMoney(photographerStats(p.id).currentBalance)})</option>`).join('');
+  openModal(`<div class="modal-header"><h3>تسديد دفعة لمصور</h3><button class="icon-btn" onclick="closeModal()">✕</button></div><div class="modal-body"><div class="form-field"><label>التاريخ</label><input type="date" id="pyt-date" value="${todayStr()}"></div><div class="form-field"><label>المصور</label><select id="pyt-ph"><option value="">اختر المصور</option>${opts}</select></div><div class="form-field"><label>المبلغ المسدد</label><input type="number" id="pyt-amount"></div></div><div class="modal-footer"><button class="btn-secondary" onclick="closeModal()">إلغاء</button><button class="btn-primary" onclick="savePayout()">حفظ</button></div>`);
+}
+function savePayout(){
+  const date = document.getElementById('pyt-date').value, phId = document.getElementById('pyt-ph').value, amt = parseFloat(document.getElementById('pyt-amount').value)||0;
+  if(date && phId && amt>0) { state.payouts.push({id:uid(), date, photographerId:phId, amount:amt}); saveState(); closeModal(); renderCurrentView(); }
+}
+function deletePayout(id){ state.payouts = state.payouts.filter(x=>x.id!==id); saveState(); renderCurrentView(); }
+
+function renderPortalContent(p) {
+    const st = photographerStats(p.id, currentMonth);
+    const upcoming = state.events.filter(e => (e.photographerIds||[]).includes(p.id) && e.status !== 'completed').sort((a,b)=>a.date.localeCompare(b.date));
+    
+    document.getElementById('portal-content').innerHTML = `
+        <header class="portal-header">
+            <div>
+                <h2>مرحباً، ${escapeHtml(p.name)} 👋</h2>
+            </div>
+            <div class="month-filter" style="margin-top:10px;">
+                <button class="icon-btn" onclick="shiftMonth(-1)">‹</button>
+                <input type="month" value="${currentMonth}" onchange="onMonthChange(this.value)">
+                <button class="icon-btn" onclick="shiftMonth(1)">›</button>
+            </div>
+        </header>
+        
+        <div class="stat-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom: 24px;">
+            <div class="stat-card"><span class="stat-label">أيام العمل (${formatMonthLabel(currentMonth)})</span><span class="stat-value">${st.daysMonth}</span></div>
+            <div class="stat-card highlight"><span class="stat-label" style="color:#9AA0AE">الرصيد المستحق (مدى الحياة)</span><span class="stat-value" style="color:var(--gold)">${fmtMoney(st.currentBalance)}</span></div>
+        </div>
+        
+        <div class="dash-lower" style="grid-template-columns: 1fr;">
+            ${upcoming.length > 0 ? `
+            <div class="card" style="border-color: var(--gold); background: var(--gold-bg);">
+                <h3 style="color: var(--gold-deep); margin-bottom: 12px;">⏳ مواعيدك القادمة</h3>
+                <div class="events-list" style="grid-template-columns: 1fr;">
+                    ${upcoming.map(e => `
+                        <div style="background:#fff; padding:16px; border-radius:10px; border:1px solid #E4E2DC;">
+                            <h4 style="font-size:16px; margin:0;">${formatDateAr(e.date)}${e.time?' · '+e.time:''}</h4>
+                            <p class="small" style="color:var(--ink-soft); margin-top:4px;">🏛️ ${escapeHtml(hallName(e.hallId))}</p>
+                            <a href="${buildGCalLink(e)}" target="_blank" class="btn-secondary sm" style="margin-top:14px; width:100%; border-color:var(--gold); color:var(--gold-deep)">📅 أضف لتقويم جوجل</a>
+                        </div>`).join('')}
+                </div>
+            </div>` : ''}
+
+            <div class="card">
+                <h3 style="margin-bottom: 16px;">تفاصيل أرباحك (${formatMonthLabel(currentMonth)})</h3>
+                <table class="data-table">
+                    <tbody>
+                        ${st.eventsMonth.length ? st.eventsMonth.map(e => `<tr><td>${formatDateAr(e.date)}</td><td>${escapeHtml(hallName(e.hallId))}</td><td>${fmtMoney(p.wage)}</td></tr>`).join('') : '<tr><td colspan="3" class="muted">لا يوجد عمل مسجل هذا الشهر</td></tr>'}
+                    </tbody>
+                </table>
+                <div class="invoice-summary">
+                    <div class="total"><span>إجمالي أرباح الشهر</span><b>${fmtMoney(st.wageMonth + st.equipmentMonth + st.bonusMonth)}</b></div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+document.addEventListener('DOMContentLoaded', initApp);
+</script>
+</body>
+</html>
