@@ -396,6 +396,7 @@ window.handleAuth = async () => {
       const phone = document.getElementById('auth-phone').value;
       if(!name || !phone) throw new Error("يرجى إكمال بيانات الاستوديو");
 
+      window.isRegistering = true; // إيقاف المستمع مؤقتاً لتجنب الخروج التلقائي
       const userCred = await createUserWithEmailAndPassword(auth, email, pass);
       // Create SaaS profile for new studio (3 days trial by default)
       const trialEnd = new Date(); trialEnd.setDate(trialEnd.getDate() + 3);
@@ -411,6 +412,8 @@ window.handleAuth = async () => {
       state.settings.companyName = name;
       state.settings.phone = phone;
       await window.saveDataToCloud(userCred.user.uid);
+      
+      window.isRegistering = false; // السماح للمستمع بالعمل
       window.showToast("تم إنشاء الحساب بنجاح! فترة تجريبية 3 أيام.", "success");
     } else {
       await signInWithEmailAndPassword(auth, email, pass);
@@ -461,7 +464,21 @@ onAuthStateChanged(auth, async (user) => {
   // Normal Studio flow
   window.userRole = 'studio';
   try {
-    const studioDoc = await getDoc(doc(db, "studios", user.uid));
+    // انتظار انتهاء عملية التسجيل إذا كانت جارية
+    while(window.isRegistering) {
+        await new Promise(r => setTimeout(r, 500));
+    }
+
+    let studioDoc = await getDoc(doc(db, "studios", user.uid));
+    
+    // محاولة جلب البيانات مرة أخرى في حال تأخر قاعدة البيانات (Race Condition)
+    let retries = 0;
+    while (!studioDoc.exists() && retries < 4) {
+        await new Promise(r => setTimeout(r, 1000));
+        studioDoc = await getDoc(doc(db, "studios", user.uid));
+        retries++;
+    }
+
     if (!studioDoc.exists()) {
       showScreen('auth-screen');
       window.showToast("بيانات الاستوديو غير موجودة!", "error");
